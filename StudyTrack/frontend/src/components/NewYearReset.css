@@ -1,0 +1,12 @@
+/* Post-it rose « Nouvelle année » (autonome : utilisable dans la page Paramètres) */
+.year-note {
+  --p: #ffc2e8; position: relative; max-width: 36rem; margin-top: .9rem; padding: 2.3rem 1.25rem 1.1rem; transform: rotate(-.3deg);
+  border-radius: 2px 2px 14px 2px; font-size: 1.25rem; line-height: 1.3; color: #1a2140;
+}
+.year-note h2 { margin: 0 0 .4rem; font: 700 2.7rem/1 var(--font-display); color: var(--ink); }
+.year-note p { margin: 0 0 .6rem; }
+.year-note .ghost { min-height: 46px; font: 1.2rem var(--font-body); background: #fff; }
+.year-note .primary { min-height: 52px; margin-top: 0; font: 1.35rem var(--font-body); }
+.year-confirm { display: grid; gap: .5rem; padding: .75rem; border-radius: 8px; background: rgba(255,255,255,.6); }
+.year-error { color: #8f1d17; }
+.year-note .year-danger { background: #b3261e; box-shadow: 0 3px 0 #7a1510; }

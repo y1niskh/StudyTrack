@@ -1,0 +1,25 @@
+/* Mise en page commune aux pages « tableau » (Accueil, Cours…) */
+.fridge--board { --seam-top: 8.5rem; padding: 1.25rem 1rem 3rem; }
+.board { position: relative; z-index: 1; max-width: 66rem; margin: 0 auto; display: grid; gap: 1.5rem; font-size: 1.25rem; line-height: 1.3; color: #1a2140; }
+.board p { margin: 0; }
+.board ul { margin: 0; padding: 0; list-style: none; }
+.loading { text-align: center; font-size: 1.4rem; }
+.board .ghost { min-height: 46px; font: 1.2rem var(--font-body); background: #fff; }
+.board .primary { min-height: 52px; font: 1.35rem var(--font-body); }
+.sheet { display: flex; flex-direction: column; position: relative; margin-top: .9rem; padding: 2.3rem 1.25rem 1.1rem; border-radius: 2px 2px 14px 2px; }
+.board h2 { margin: 0; font: 700 2.7rem/1 var(--font-display); color: var(--ink); }
+.sub { margin: .15rem 0 .7rem !important; }
+.empty { padding: .3rem 0; }
+.board .sheet .empty { margin: auto 0; text-align: center; font-size: 1.5rem; }
+.ico { width: 1.1em; height: 1.1em; flex: none; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; vertical-align: -.12em; }
+/* Une gommette de couleur par élève, la même partout */
+.gom {
+  position: absolute; left: -2.6rem; top: 8px; width: 16px; height: 16px; border-radius: 50%;
+  background: radial-gradient(circle at 32% 28%, #fff 0 8%, transparent 30%), var(--c);
+  box-shadow: 0 2px 2px rgba(0,0,0,.35), inset 0 -2px 3px rgba(0,0,0,.3);
+}
+.stu { font: 700 2.2rem/1 var(--font-display); color: var(--c, var(--ink)); }
+.l2 { font-size: 1.3rem; line-height: 1.25; }
+@media (min-width: 760px) {
+  .fridge--board { padding: 1.75rem 2rem 3rem; }
+}

@@ -1,0 +1,2 @@
+.opt.wd:has(input:checked) { background: var(--ink); }
+.lf-hint { margin: -.4rem 0 0; font-size: 1.05rem; color: #5a4d10; }

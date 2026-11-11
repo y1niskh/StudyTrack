@@ -1,0 +1,14 @@
+.topbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .75rem 1rem; }
+.who { display: flex; flex-wrap: wrap; align-items: center; gap: .75rem; }
+.hello { font: 700 2.1rem/1 var(--font-display); color: #1c2a30; text-shadow: 0 1px 0 rgba(255,255,255,.6); }
+
+/* Menu : étiquettes aimantées rectangulaires */
+.nav { display: flex; flex-wrap: wrap; gap: .6rem; margin-top: .6rem; width: 100%; }
+.nav a {
+  display: inline-flex; align-items: center; min-height: 44px; padding: 0 1.1rem; border-radius: 8px; text-decoration: none;
+  font: 1.25rem var(--font-body); color: var(--ink); background: linear-gradient(180deg, rgba(255,255,255,.9), rgba(255,255,255,.6));
+  box-shadow: inset 0 -.18em 0 rgba(0,0,0,.12), 0 4px 5px rgba(0,0,0,.35); transform: rotate(var(--r, -1deg));
+}
+.nav a:nth-child(even) { --r: 1deg; }
+.nav a[aria-current="page"] { color: #fff; background: linear-gradient(180deg, rgba(255,255,255,.3), rgba(255,255,255,0) 52%), var(--ink); text-shadow: 0 1px 0 rgba(0,0,0,.35); }
+.nav a:focus-visible { outline: 3px solid var(--ink); outline-offset: 3px; }

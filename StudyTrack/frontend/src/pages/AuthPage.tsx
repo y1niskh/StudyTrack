@@ -3,9 +3,8 @@ import { Link, useNavigate } from "react-router-dom";
 import { authenticate, ApiError } from "../services/auth";
 import { validateAuth, MIN_PASSWORD, type AuthErrors, type AuthFields } from "../lib/validation";
 import FridgeDecor from "./FridgeDecor";
+import Brand from "../components/Brand";
 import "./AuthPage.css";
-
-const LETTERS = "StudyTrack".split("");
 
 const EMPTY: AuthFields = { name: "", email: "", password: "", confirm: "" };
 
@@ -52,14 +51,10 @@ export default function AuthPage({ mode }: { mode: "login" | "register" }) {
   const pwdType = showPwd ? "text" : "password";
 
   return (
-    <main className="fridge">
+    <main className="fridge fridge--center">
       <FridgeDecor />
       <div className="auth">
-      <h1 className="brand" aria-label="StudyTrack">
-        {LETTERS.map((l, i) => (
-          <span key={i} aria-hidden="true" className={`tile t${i % 5}`}>{l}</span>
-        ))}
-      </h1>
+      <Brand />
       <p className="tagline">Le suivi des cours particuliers, séance après séance.</p>
 
       <form className="sheet" onSubmit={onSubmit} noValidate>
