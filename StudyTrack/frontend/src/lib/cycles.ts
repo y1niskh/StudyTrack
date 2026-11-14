@@ -47,3 +47,36 @@ export function studentColor(enrollments: Enrollment[]) {
   const names = [...new Set(enrollments.map((e) => e.studentName))].sort();
   return (name: string) => PALETTE[Math.max(names.indexOf(name), 0) % PALETTE.length];
 }
+
+/** Tout ce qu'il faut pour la page Paiements (tous les cycles, sans limite de semaine). */
+export function paymentsOverview(data: DashboardData) {
+  const byId = new Map(data.enrollments.map((e) => [e.id, e]));
+  const lessonById = new Map(data.lessons.map((l) => [l.id, l]));
+  const amountOf = (c: PaymentCycle, e: Enrollment) => c.amount ?? e.price ?? 0;
+
+  const due = data.cycles
+    .filter((c) => c.status === "unpaid" && byId.has(c.enrollmentId))
+    .map((cycle) => { const enrollment = byId.get(cycle.enrollmentId)!; return { cycle, enrollment, amount: amountOf(cycle, enrollment), ...cycleProgress(cycle, enrollment, data.lessons) }; })
+    .filter((o) => o.due)
+    .sort((a, b) => (a.doneAt ?? "").localeCompare(b.doneAt ?? ""));
+
+  /* En cours : pour chaque inscription, le cycle où ira la prochaine séance (premier cycle non payé non plein), ou 0 séance */
+  const ongoing = data.enrollments
+    .map((enrollment) => {
+      const cycle = data.cycles.filter((c) => c.enrollmentId === enrollment.id && c.status === "unpaid" && c.lessonIds.length < enrollment.cycleSize).sort((a, b) => a.number - b.number)[0];
+      const done = cycle ? cycleProgress(cycle, enrollment, data.lessons).done : 0;
+      return { enrollment, done, remaining: enrollment.cycleSize - done };
+    })
+    .sort((a, b) => a.remaining - b.remaining || a.enrollment.studentName.localeCompare(b.enrollment.studentName));
+
+  const paid = data.cycles
+    .filter((c) => c.status === "paid" && byId.has(c.enrollmentId))
+    .sort((a, b) => (b.paidAt ?? "").localeCompare(a.paidAt ?? ""))
+    .map((cycle) => {
+      const enrollment = byId.get(cycle.enrollmentId)!;
+      const lessons = cycle.lessonIds.map((id) => lessonById.get(id)).filter((l): l is Lesson => !!l).sort((a, b) => a.date.localeCompare(b.date));
+      return { cycle, enrollment, amount: amountOf(cycle, enrollment), lessons, corrected: !!cycle.events?.some((e) => e.type === "unpaid") };
+    });
+
+  return { due, ongoing, paid, totalDue: due.reduce((t, o) => t + o.amount, 0), totalPaid: paid.reduce((t, o) => t + o.amount, 0) };
+}

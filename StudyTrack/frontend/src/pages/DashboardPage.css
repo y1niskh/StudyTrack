@@ -1,12 +1,5 @@
 
 
-/* Post-its de résumé */
-.stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.5rem 1rem; padding-top: .9rem; }
-.stat { position: relative; padding: 1.6rem .6rem .9rem; text-align: center; border-radius: 1px 1px 8px 1px; transform: rotate(var(--r, 0deg)); }
-.stat:nth-child(1) { --r: -2deg; } .stat:nth-child(2) { --r: 1.5deg; } .stat:nth-child(3) { --r: -1deg; } .stat:nth-child(4) { --r: 2deg; }
-.num { display: block; font: 700 3.3rem/1 var(--font-display); color: var(--ink); }
-.num.money { font-size: 2.4rem; padding: .55rem 0 .35rem; }
-.lab { font-size: 1.2rem; line-height: 1.1; }
 
 .cols { display: grid; gap: 1.5rem; align-items: stretch; }
 .sheet.pay { --p: #fff27a; transform: rotate(-.4deg); }
@@ -29,22 +22,12 @@
 .lesson .stu { font-size: 2rem; line-height: 32px; }
 .lesson .l2 { height: 32px; line-height: 32px; }
 
-/* Lignes séparées par des pointillés, comme sur un vrai post-it */
-.item { padding: .8rem 0; border-top: 2px dashed rgba(60,50,0,.3); }
-.item:first-child { border-top: 0; padding-top: .2rem; }
-.row { display: flex; align-items: center; justify-content: space-between; gap: .75rem; margin-bottom: .2rem; }
-.amount { font: 700 1.9rem/1 var(--font-display); color: #b3261e; padding: .2rem .8rem; border: 3px solid #b3261e; border-radius: 55% 45% 50% 50% / 50% 55% 45% 50%; transform: rotate(-3deg); }
-.item .primary { margin-top: .7rem; }
-.item .stu .ico { color: #1b7a2f; stroke-width: 3.2; }
-.confirm { display: grid; gap: .5rem; margin-top: .7rem; padding: .75rem; border-radius: 8px; background: rgba(255,255,255,.55); }
-.confirm .primary { margin-top: 0; }
 
 .late { margin-top: .6rem; padding: .6rem .75rem; border: 2px dashed #b3261e; border-radius: 10px; background: rgba(255,255,255,.4); }
 .late summary { cursor: pointer; color: #8f1d17; }
 .late[open] summary { margin-bottom: .5rem; }
 
 @media (min-width: 760px) {
-  .stats { grid-template-columns: repeat(4, minmax(0, 1fr)); }
   .cols { grid-template-columns: 1fr 1fr; }
   .lined { grid-area: lined; } .sheet.pay { grid-area: pay; } .sheet.paid { grid-area: paid; }
   .cols[data-span="lined"] { grid-template-areas: "lined pay" "lined paid"; }

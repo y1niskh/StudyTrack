@@ -3,7 +3,7 @@ import FridgeFrame from "../components/FridgeFrame";
 import Header from "../components/Header";
 import LessonForm, { type LessonValues } from "../components/LessonForm";
 import SlotForm from "../components/SlotForm";
-import { addDays, startOfDay, studentColor, weekRange } from "../lib/cycles";
+import { addDays, studentColor, weekRange } from "../lib/cycles";
 import { dayKey, STATUS_LABEL, timeOf, toISO } from "../lib/lessons";
 import { isVirtual, occurrences, WEEKDAYS } from "../lib/slots";
 import { createLesson, createSlot, deleteLesson, deleteSlot, fetchDashboard, updateLesson } from "../services/api";
@@ -12,19 +12,18 @@ import type { DashboardData, Lesson, LessonStatus } from "../types";
 import "./LessonsPage.css";
 
 const fmt = (d: Date | string, o: Intl.DateTimeFormatOptions) => new Intl.DateTimeFormat("fr-FR", o).format(new Date(d));
-const cap = (t: string) => t[0].toUpperCase() + t.slice(1);
 
 export default function LessonsPage() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [busy, setBusy] = useState(false);
-  const [offset, setOffset] = useState(0); // 0 = cette semaine
+  const [offset, setOffset] = useState(0); // 0 = cette semaine, -1 = la semaine passée, 1 = la suivante…
   const [student, setStudent] = useState("all");
   const [editId, setEditId] = useState<string | null>(null);
   const [delId, setDelId] = useState<string | null>(null);
   const [stopId, setStopId] = useState<string | null>(null);
-  const [formKey, setFormKey] = useState(0);
+  const [addKey, setAddKey] = useState(0);
   const [now] = useState(() => new Date());
 
   const load = useCallback(async () => {
@@ -45,46 +44,51 @@ export default function LessonsPage() {
   const color = studentColor(enrollments);
   const byId = new Map(enrollments.map((e) => [e.id, e]));
   const locked = new Set((data?.cycles ?? []).filter((c) => c.status === "paid").flatMap((c) => c.lessonIds));
-  const students = [...new Set(enrollments.map((e) => e.studentName))].sort();
+  const uniq = (f: (e: (typeof enrollments)[number]) => string) => [...new Set(enrollments.map(f))].sort();
+  const students = uniq((e) => e.studentName);
 
-  /* Semaine affichée : du dimanche au samedi, comme pour les paiements */
+  /* Semaine affichée : cours enregistrés + cours qui se répètent (calculés), du dimanche au samedi */
   const weekStart = addDays(weekRange(now).start, 7 * offset);
   const weekEnd = addDays(weekStart, 7);
-  const last = addDays(weekStart, 6);
-  const sameMonth = weekStart.getMonth() === last.getMonth();
-  const weekLabel = `du ${fmt(weekStart, sameMonth ? { weekday: "long", day: "numeric" } : { weekday: "long", day: "numeric", month: "long" })} au ${fmt(last, { weekday: "long", day: "numeric", month: "long" })}`;
+  const pool = data ? [...data.lessons, ...occurrences(slots, data.lessons, weekStart, weekEnd)] : [];
+  const okStudent = (l: Lesson) => { const e = byId.get(l.enrollmentId); return !!e && (student === "all" || e.studentName === student); };
+  const inWeek = pool.filter((l) => new Date(l.date) >= weekStart && new Date(l.date) < weekEnd && okStudent(l)).sort((a, b) => a.date.localeCompare(b.date));
+  const days = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
+  const weekLabel = (() => {
+    const last = addDays(weekStart, 6); const same = weekStart.getMonth() === last.getMonth();
+    return `du ${fmt(weekStart, same ? { weekday: "long", day: "numeric" } : { weekday: "long", day: "numeric", month: "long" })} au ${fmt(last, { weekday: "long", day: "numeric", month: "long" })}`;
+  })();
 
-  const known = (l: Lesson) => byId.has(l.enrollmentId);
-  const inWeek = !data ? [] : [...data.lessons, ...occurrences(slots, data.lessons, weekStart, weekEnd)]
-    .filter((l) => known(l) && new Date(l.date) >= weekStart && new Date(l.date) < weekEnd && (student === "all" || byId.get(l.enrollmentId)!.studentName === student))
-    .sort((a, b) => a.date.localeCompare(b.date));
-
-  /* Cours prévus dont l'heure est passée : à confirmer (fait ou annulé) pour que les paiements restent justes */
-  const since = slots.length ? new Date(`${slots.map((s) => s.since).sort()[0]}T00:00`) : now;
-  const toConfirm = !data ? [] : [...data.lessons, ...occurrences(slots, data.lessons, since, now)]
-    .filter((l) => known(l) && l.status === "planned" && new Date(l.date) < now)
-    .sort((a, b) => a.date.localeCompare(b.date));
+  /* À confirmer : cours prévus dont l'heure est passée et qu'on n'a pas encore marqués « fait » ou « annulé » */
+  const since = slots.map((s) => new Date(`${s.since}T00:00`)).sort((a, b) => +a - +b)[0] ?? now;
+  const toConfirm = data
+    ? [...data.lessons, ...occurrences(slots, data.lessons, since, now)].filter((l) => l.status === "planned" && new Date(l.date) < now && byId.has(l.enrollmentId)).sort((a, b) => a.date.localeCompare(b.date))
+    : [];
 
   const toValues = (l: Lesson): LessonValues => ({ enrollmentId: l.enrollmentId, date: dayKey(l.date), time: timeOf(l.date), status: l.status, notes: l.notes ?? "" });
   const body = (v: LessonValues) => ({ date: toISO(v.date, v.time), status: v.status as LessonStatus, notes: v.notes.trim() || undefined });
-  const save = (l: Lesson, patch: Partial<Lesson>) => isVirtual(l.id)
-    ? createLesson({ enrollmentId: l.enrollmentId, date: l.date, status: l.status, notes: l.notes, slotId: l.slotId, occurrence: l.occurrence, ...patch })
-    : updateLesson(l.id, patch);
   const blank: LessonValues = { enrollmentId: "", date: dayKey(now), time: "16:00", status: "planned", notes: "" };
-  const today = dayKey(startOfDay(now)), tomorrow = dayKey(addDays(startOfDay(now), 1));
+  /* Un cours « virtuel » est enregistré au moment où on agit dessus ; un vrai cours est simplement modifié */
+  const save = (l: Lesson, patch: Partial<LessonInput2>) =>
+    isVirtual(l.id)
+      ? createLesson({ enrollmentId: l.enrollmentId, date: l.date, status: l.status, notes: l.notes, slotId: l.slotId, occurrence: l.occurrence, ...patch })
+      : updateLesson(l.id, patch);
+
+  const info = (l: Lesson) => { const e = byId.get(l.enrollmentId)!; return <p className="l2">{e.subjectName} avec {e.teacherName}</p>; };
 
   const row = (l: Lesson) => {
     const e = byId.get(l.enrollmentId)!;
+    const virt = isVirtual(l.id);
     return (
       <li key={l.id} className={`lrow ${l.status}`} style={{ "--c": color(e.studentName) } as CSSProperties}>
         <i className="gom" aria-hidden="true" />
         {editId === l.id ? (
           <>
             <p className="stu">{e.studentName}</p>
-            <p className="l2">{e.subjectName} avec {e.teacherName}</p>
+            {info(l)}
             <LessonForm initial={toValues(l)} submitLabel="Enregistrer" busy={busy} onCancel={() => { setEditId(null); setDelId(null); }}
               onSubmit={async (v) => { if (await run(() => save(l, body(v)), "Cours modifié.")) setEditId(null); }}
-              extra={isVirtual(l.id) ? null : delId === l.id ? (
+              extra={virt ? null : delId === l.id ? (
                 <div className="confirm" role="group" aria-label="Confirmer la suppression">
                   <p>Supprimer ce cours ?</p>
                   <button type="button" className="primary danger" disabled={busy} onClick={async () => { if (await run(() => deleteLesson(l.id), "Cours supprimé.")) { setEditId(null); setDelId(null); } }}>Oui, supprimer</button>
@@ -95,7 +99,7 @@ export default function LessonsPage() {
         ) : (
           <>
             <div className="l1"><span className="time">{timeOf(l.date)}</span><strong className="stu">{e.studentName}</strong><span className={`stamp ${l.status}`}>{STATUS_LABEL[l.status]}</span></div>
-            <p className="l2">{e.subjectName} avec {e.teacherName}</p>
+            {info(l)}
             {l.notes && <p className="note">« {l.notes} »</p>}
             {locked.has(l.id)
               ? <p className="lock"><svg className="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 11h12v9H6zM8 11V8a4 4 0 0 1 8 0v3" /></svg> Dans un cycle déjà payé : ne peut plus être modifié.</p>
@@ -110,12 +114,12 @@ export default function LessonsPage() {
     <div className="setup">
       <section className="sheet slots" aria-labelledby="h-slots">
         <i className="magnet" style={{ "--m": "#2f7de1" } as CSSProperties} aria-hidden="true" />
-        <h2 id="h-slots">{slots.length === 0 ? "Comment ça marche" : "Mes cours chaque semaine"}</h2>
+        <h2 id="h-slots">Mes cours chaque semaine</h2>
         {slots.length === 0 && (
           <ol className="steps">
-            <li><b>1</b> Écris le cours une seule fois : élève, matière, enseignant, jour et heure.</li>
-            <li><b>2</b> Il s'affiche tout seul chaque semaine, à la bonne date.</li>
-            <li><b>3</b> Après le cours, appuie sur « Oui, il a eu lieu ». Les paiements se calculent tout seuls.</li>
+            <li><b>1</b><span>Écris un cours <strong>une seule fois</strong> avec le papier jaune : l'élève, la matière, l'enseignant, le jour et l'heure.</span></li>
+            <li><b>2</b><span>Il s'affiche <strong>tout seul chaque semaine</strong>, ici et sur l'accueil (les cours de demain).</span></li>
+            <li><b>3</b><span>Après chaque cours, dis s'il a eu lieu : <strong>le paiement se calcule tout seul</strong>.</span></li>
           </ol>
         )}
         <ul>
@@ -125,7 +129,7 @@ export default function LessonsPage() {
               <li key={s.id} className="item" style={{ "--c": color(e.studentName) } as CSSProperties}>
                 <p className="stu">{e.studentName}</p>
                 <p className="l2">{e.subjectName} avec {e.teacherName}</p>
-                <p className="every">Chaque {WEEKDAYS[s.weekday]} à {s.time}</p>
+                <p className="when">Chaque {WEEKDAYS[s.weekday]} à {s.time}</p>
                 {stopId === s.id ? (
                   <div className="confirm" role="group" aria-label="Confirmer l'arrêt">
                     <p>Arrêter ce cours ? Les cours déjà passés sont gardés.</p>
@@ -143,14 +147,13 @@ export default function LessonsPage() {
         <i className="magnet" aria-hidden="true" />
         <h2 id="h-add">Ajouter un cours</h2>
         <p className="sub">Écris-le une seule fois : il s'affichera tout seul chaque semaine.</p>
-        <SlotForm key={`s${formKey}`} students={students} subjects={[...new Set(enrollments.map((e) => e.subjectName))].sort()}
-          teachers={[...new Set(enrollments.map((e) => e.teacherName))].sort()} busy={busy}
-          onSubmit={async (v) => { if (await run(() => createSlot(v), "Cours ajouté : il apparaît chaque semaine.")) setFormKey((k) => k + 1); }} />
+        <SlotForm key={addKey} students={students} subjects={uniq((e) => e.subjectName)} teachers={uniq((e) => e.teacherName)} busy={busy}
+          onSubmit={async (v) => { if (await run(() => createSlot(v), "Cours ajouté : il apparaît chaque semaine.")) setAddKey((k) => k + 1); }} />
         {enrollments.length > 0 && (
           <details className="oneoff">
             <summary>Ajouter un seul cours (rattrapage)</summary>
-            <LessonForm key={`l${formKey}`} enrollments={enrollments} initial={blank} submitLabel="Ajouter ce cours" busy={busy}
-              onSubmit={async (v) => { if (await run(() => createLesson({ enrollmentId: v.enrollmentId, ...body(v) }), "Cours ajouté.")) setFormKey((k) => k + 1); }} />
+            <LessonForm enrollments={enrollments} initial={blank} submitLabel="Ajouter ce cours" busy={busy}
+              onSubmit={async (v) => { await run(() => createLesson({ enrollmentId: v.enrollmentId, ...body(v) }), "Cours ajouté."); }} />
           </details>
         )}
       </section>
@@ -172,55 +175,60 @@ export default function LessonsPage() {
 
             {toConfirm.length > 0 && (
               <section className="sheet confirmbox" aria-labelledby="h-conf">
-                <i className="magnet big" style={{ "--m": "#e8590c" } as CSSProperties} aria-hidden="true" />
+                <i className="magnet" style={{ "--m": "#d62f4b" } as CSSProperties} aria-hidden="true" />
                 <h2 id="h-conf">À confirmer</h2>
                 <p className="sub">Ces cours ont-ils eu lieu ?</p>
                 <ul className="cgrid">
-                  {toConfirm.map((l) => { const e = byId.get(l.enrollmentId)!; return (
-                    <li key={l.id} className="item" style={{ "--c": color(e.studentName) } as CSSProperties}>
-                      <p className="stu">{e.studentName}</p>
-                      <p className="l2">{e.subjectName} avec {e.teacherName}</p>
-                      <p className="every">{cap(fmt(l.date, { weekday: "long", day: "numeric", month: "long" }))} à {timeOf(l.date)}</p>
-                      <div className="yn">
-                        <button className="primary ok" disabled={busy} onClick={() => void run(() => save(l, { status: "completed" }), "Cours confirmé.")}>Oui, il a eu lieu</button>
-                        <button className="ghost" disabled={busy} onClick={() => void run(() => save(l, { status: "cancelled" }), "Cours marqué annulé.")}>Annulé</button>
-                      </div>
-                    </li>); })}
+                  {toConfirm.map((l) => {
+                    const e = byId.get(l.enrollmentId)!;
+                    return (
+                      <li key={l.id} className="item" style={{ "--c": color(e.studentName) } as CSSProperties}>
+                        <p className="stu">{e.studentName}</p>
+                        <p className="l2">{e.subjectName} avec {e.teacherName}</p>
+                        <p className="when">{fmt(l.date, { weekday: "long", day: "numeric", month: "long" })} à {timeOf(l.date)}</p>
+                        <div className="yesno">
+                          <button className="primary ok" disabled={busy} onClick={() => void run(() => save(l, { status: "completed" }), "Cours confirmé.")}>Oui, il a eu lieu</button>
+                          <button className="ghost" disabled={busy} onClick={() => void run(() => save(l, { status: "cancelled" }), "Cours annulé.")}>Il n'a pas eu lieu</button>
+                        </div>
+                      </li>
+                    );
+                  })}
                 </ul>
               </section>
             )}
 
             <section className="fiche" aria-labelledby="h-week">
               <i className="magnet big" aria-hidden="true" />
-              <h2 id="h-week">Mes cours de la semaine</h2>
-              {slots.length === 0 && data.lessons.length === 0 ? (
-                <p className="empty">Ton emploi du temps apparaîtra ici dès que tu auras ajouté un cours.</p>
-              ) : (<>
+              <h2 id="h-week">{offset === 0 ? "Cette semaine" : offset === 1 ? "La semaine prochaine" : offset === -1 ? "La semaine passée" : "Une autre semaine"}</h2>
+              <p className="sub">{weekLabel}</p>
               <div className="weeknav">
-                <button className="ghost" onClick={() => setOffset(offset - 1)} aria-label="Semaine précédente">‹ Avant</button>
-                <p className="sub" aria-live="polite">{weekLabel}</p>
-                <button className="ghost" onClick={() => setOffset(offset + 1)} aria-label="Semaine suivante">Après ›</button>
+                <button className="ghost" onClick={() => setOffset(offset - 1)}>‹ Semaine précédente</button>
                 {offset !== 0 && <button className="ghost" onClick={() => setOffset(0)}>Cette semaine</button>}
+                <button className="ghost" onClick={() => setOffset(offset + 1)}>Semaine suivante ›</button>
               </div>
               {students.length > 1 && (
-                <div className="chips" role="group" aria-label="Élève">
-                  {["all", ...students].map((s) => (
-                    <button key={s} type="button" className={`chip${student === s ? " on" : ""}`} aria-pressed={student === s} onClick={() => setStudent(s)}>
-                      {s !== "all" && <i className="dotc" style={{ background: color(s) }} />}{s === "all" ? "Tous les élèves" : s}
-                    </button>
-                  ))}
-                </div>
+                <fieldset className="chips">
+                  <legend>Élève</legend>
+                  <div>
+                    {["all", ...students].map((s) => (
+                      <button key={s} type="button" className={`chip${student === s ? " on" : ""}`} aria-pressed={student === s} onClick={() => setStudent(s)}>
+                        {s !== "all" && <i className="dotc" style={{ background: color(s) }} />}{s === "all" ? "Tous" : s}
+                      </button>
+                    ))}
+                  </div>
+                </fieldset>
               )}
-              {Array.from({ length: 7 }, (_, i) => addDays(weekStart, i)).map((d) => {
+              {slots.length === 0 && inWeek.length === 0 && <p className="none">Rien à afficher : ajoute d'abord un cours.</p>}
+              {(slots.length > 0 || inWeek.length > 0) && days.map((d) => {
                 const k = dayKey(d); const list = inWeek.filter((l) => dayKey(l.date) === k);
+                const tag = k === dayKey(now) ? "Aujourd'hui" : k === dayKey(addDays(now, 1)) ? "Demain" : "";
                 return (
                   <section key={k} className="dayblock" aria-label={fmt(d, { dateStyle: "long" })}>
-                    <h3 className="day">{fmt(d, { weekday: "long", day: "numeric", month: "long" })}{k === today && <span className="tag">Aujourd'hui</span>}{k === tomorrow && <span className="tag">Demain</span>}</h3>
+                    <h3 className="day">{fmt(d, { weekday: "long", day: "numeric", month: "long" })}{tag && <span className="tag">{tag}</span>}</h3>
                     {list.length === 0 ? <p className="nolesson">Pas de cours</p> : <ul>{list.map(row)}</ul>}
                   </section>
                 );
               })}
-              </>)}
             </section>
 
             {slots.length > 0 && setup}
@@ -230,3 +238,5 @@ export default function LessonsPage() {
     </main>
   );
 }
+
+type LessonInput2 = Partial<Pick<Lesson, "date" | "status" | "notes">>;

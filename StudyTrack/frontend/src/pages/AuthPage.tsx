@@ -28,7 +28,8 @@ export default function AuthPage({ mode }: { mode: "login" | "register" }) {
     if (Object.keys(errs).length) return;
     setLoading(true);
     try {
-      await authenticate(mode, { name: values.name.trim(), email: values.email.trim(), password: values.password });
+      const email = values.email.trim();
+      await authenticate(mode, isRegister ? { name: values.name.trim(), email, password: values.password } : { email, password: values.password });
       navigate("/", { replace: true });
     } catch (err) {
       setFormError(err instanceof ApiError ? err.message : "Une erreur est survenue. Réessaie dans un instant.");

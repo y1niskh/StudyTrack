@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState, type CSSProperties } from "react";
 import Header from "../components/Header";
+import PayCard from "../components/PayCard";
 import FridgeFrame from "../components/FridgeFrame";
 import { addDays, studentColor, summarize } from "../lib/cycles";
 import { fetchDashboard, markPaid } from "../services/api";
@@ -16,12 +17,10 @@ const PATHS = {
 };
 const Ico = ({ n }: { n: keyof typeof PATHS }) => <svg className="ico" viewBox="0 0 24 24" aria-hidden="true"><path d={PATHS[n]} /></svg>;
 
-type DueItem = ReturnType<typeof summarize>["dueThisWeek"][number];
 
 export default function DashboardPage() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [error, setError] = useState("");
-  const [confirmId, setConfirmId] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
   const load = useCallback(async () => {
@@ -37,33 +36,10 @@ export default function DashboardPage() {
     finally { setBusy(false); }
   }
 
+  const pay = (id: string) => run(() => markPaid(id), "Le paiement n'a pas pu être enregistré.", () => undefined);
   const s = data ? summarize(data) : null;
   const color = studentColor(data?.enrollments ?? []);
   const who = (e: Enrollment) => ({ "--c": color(e.studentName) }) as CSSProperties;
-
-  const PayCard = ({ o }: { o: DueItem }) => {
-    const e = o.enrollment;
-    return (
-      <li className="item" style={who(e)}>
-        <div className="row">
-          <p className="stu">{e.studentName}</p>
-          {o.amount > 0 && <p className="amount">{money(o.amount)}</p>}
-        </div>
-        <p className="l2">{e.subjectName} avec {e.teacherName}</p>
-        {confirmId === o.cycle.id ? (
-          <div className="confirm" role="group" aria-label="Confirmation du paiement">
-            <p>As-tu bien payé {e.teacherName} ?</p>
-            <button className="primary" disabled={busy} onClick={() => void run(() => markPaid(o.cycle.id), "Le paiement n'a pas pu être enregistré.", () => setConfirmId(null))}>
-              {busy ? "Un instant…" : "Oui, c'est payé"}
-            </button>
-            <button className="ghost" disabled={busy} onClick={() => setConfirmId(null)}>Non, annuler</button>
-          </div>
-        ) : (
-          <button className="primary" onClick={() => setConfirmId(o.cycle.id)}>Marquer comme payé</button>
-        )}
-      </li>
-    );
-  };
 
   /* La note la plus haute prend tout un côté ; les deux autres se partagent l'autre côté : pas de trou. */
   const span = !s ? "pay" : (() => {
@@ -125,11 +101,11 @@ export default function DashboardPage() {
                   <h2 id="h-pay">À payer cette semaine</h2>
                   <p className="sub">{weekLabel}</p>
                   {s.dueThisWeek.length === 0 && <p className="empty">Rien à payer cette semaine.</p>}
-                  <ul>{s.dueThisWeek.map((o) => <PayCard key={o.cycle.id} o={o} />)}</ul>
+                  <ul>{s.dueThisWeek.map((o) => <PayCard key={o.cycle.id} cycle={o.cycle} enrollment={o.enrollment} amount={o.amount} color={color(o.enrollment.studentName)} busy={busy} onPay={pay} />)}</ul>
                   {s.overdue.length > 0 && (
                     <details className="late">
                       <summary><Ico n="alert" /> {s.overdue.length} paiement{s.overdue.length > 1 ? "s" : ""} en retard (semaines passées)</summary>
-                      <ul>{s.overdue.map((o) => <PayCard key={o.cycle.id} o={o} />)}</ul>
+                      <ul>{s.overdue.map((o) => <PayCard key={o.cycle.id} cycle={o.cycle} enrollment={o.enrollment} amount={o.amount} color={color(o.enrollment.studentName)} busy={busy} onPay={pay} />)}</ul>
                     </details>
                   )}
                 </section>
