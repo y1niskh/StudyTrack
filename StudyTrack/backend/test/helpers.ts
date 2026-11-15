@@ -1,6 +1,7 @@
 import { PGlite, type Transaction } from "@electric-sql/pglite";
 import type { AddressInfo } from "node:net";
 import { createApp } from "../src/app.ts";
+import type { Config } from "../src/config.ts";
 import type { Db, Query } from "../src/db.ts";
 import { migrate } from "../src/migrate.ts";
 
@@ -21,10 +22,20 @@ export async function testDb(): Promise<Db> {
   return db;
 }
 
+/** Réglages de test : faux secret, une seule adresse autorisée (inventée). */
+export const testConfig: Config = {
+  jwtSecret: "secret-de-test-uniquement-0123456789abcdef",
+  allowedEmails: ["maman@example.com"],
+  secureCookies: false,
+};
+
+/** Le cookie de session d'une réponse, prêt à renvoyer dans l'en-tête `Cookie`. */
+export const sessionCookie = (res: Response) => res.headers.getSetCookie().find((c) => c.startsWith("st_session="))?.split(";")[0] ?? "";
+
 /** Démarre l'API sur un port libre. Renvoie une fonction `api(chemin, options)` et `close()`. */
-export async function startApi(db?: Db) {
+export async function startApi(db?: Db, config: Config = testConfig) {
   const database = db ?? (await testDb());
-  const server = createApp(database).listen(0);
+  const server = createApp(database, config).listen(0);
   await new Promise((r) => server.once("listening", r));
   const base = `http://localhost:${(server.address() as AddressInfo).port}/api`;
   const api = (path: string, init: RequestInit = {}) =>

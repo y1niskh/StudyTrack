@@ -4,6 +4,27 @@ Newest note on top.
 
 ---
 
+## 2026-11-15 · Claude (session 1, task 1.1)
+
+**Done**
+- Task 1.1, area auth (`src/modules/auth/`): register (allowlist), login (10 failures per IP per 15 min → 429),
+  logout (token_version +1), cookie `st_session` (httpOnly, SameSite=Strict, Path=/api, Secure in production).
+- `src/config.ts` (`loadConfig`: refuses to start without a 32+ char `JWT_SECRET`); `createApp(db, config)`;
+  `parseBody()` in `errors.ts` (zod → 400 with the first French message).
+- 14 tests pass (9 new in `auth.test.ts`); lint and typecheck clean.
+
+**Next**
+- Task 1.2: turn `userFromToken` into the `requireAuth` middleware + JSON-only check on routes that change data.
+  Explain the plan first, wait for OK.
+
+**Watch out**
+- **No PDFs, reports or quizzes until the end of Phase 1** (user's request). Then: area/part material + Phase 1 report.
+- `trust proxy` is 1: locally a client can fake `X-Forwarded-For` (tests use it to get separate IPs). Behind
+  Render's single proxy it can't. Check the real hop count at deploy (task 3.5).
+- The attempt limit is per IP, not per account: fine for one user with a strong password.
+
+---
+
 ## 2026-11-15 · Claude (session 1, end of Phase 0)
 
 **Done**
