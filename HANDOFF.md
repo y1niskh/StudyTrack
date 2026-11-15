@@ -4,6 +4,21 @@ Newest note on top.
 
 ---
 
+## 2026-11-15 · Claude (session 1, area 2.3)
+
+**Done**
+- Area 2.3: `PATCH /payment-cycles/:id/mark-paid` (full + unpaid only, optional `paidAt`) and `/mark-unpaid`
+  (paid only, `paidAt` removed). Both append to `events`, never remove; enrollment row locked. 7 tests + 2 harness lines.
+  60 tests pass; lint and typecheck clean.
+
+**Next**
+- Area 2.4: `POST /slots` (find or create names + enrollment), `DELETE /slots/:id`.
+
+**Watch out**
+- `phase-2` is local only.
+
+---
+
 ## 2026-11-15 · Claude (session 1, area 2.2)
 
 **Done**

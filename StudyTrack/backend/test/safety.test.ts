@@ -21,6 +21,8 @@ const PROTECTED: ProtectedRoute[] = [
   { method: "PATCH", path: "/lessons/:lessonId", body: () => ({ status: "cancelled", notes: "modifié par B" }) },
   { method: "DELETE", path: "/lessons/:lessonId" },
   { method: "GET", path: "/payment-cycles", expect: 200 },
+  { method: "PATCH", path: "/payment-cycles/:cycleId/mark-paid" },
+  { method: "PATCH", path: "/payment-cycles/:cycleId/mark-unpaid" },
   { method: "GET", path: "/slots", expect: 200 },
 ];
 
