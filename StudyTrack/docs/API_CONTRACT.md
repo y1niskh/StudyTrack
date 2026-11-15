@@ -2,7 +2,7 @@
 
 Ce document est destiné à la personne qui développe le **backend** (Node.js + Express + MongoDB/Mongoose).
 Il décrit exactement ce que le frontend (React, dossier `frontend/`) envoie et attend. Il complète le cahier des
-charges `StudyTrack_Specification_Pour_Claude.docx` : en cas de doute, ce contrat décrit ce que le frontend fait **réellement**.
+charges `StudyTrack_Specification.docx` : en cas de doute, ce contrat décrit ce que le frontend fait **réellement**.
 
 Le code de référence est dans le frontend :
 

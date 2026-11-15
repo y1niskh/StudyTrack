@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import type { Db } from "../src/db.ts";
 
-/* Le filet de sécurité (TRD §6, règle 1 de CLAUDE.md) : pour chaque route protégée,
+/* Le filet de sécurité (TRD §6, règle 1 du projet) : pour chaque route protégée,
    (1) sans cookie → 401 ; (2) un autre utilisateur (B) qui vise les données de A → le code attendu (404 par défaut),
    aucun identifiant de A dans la réponse, et les données de A inchangées. */
 

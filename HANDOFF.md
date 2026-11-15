@@ -4,7 +4,7 @@ Newest note on top.
 
 ---
 
-## 2026-11-15 · Claude (session 1, Phase 2 built)
+## 2026-11-15 · Session 1 (Phase 2 built)
 
 **Done**
 - Area 2.4: `POST /slots` (find or create student/teacher/subject/enrollment by name, case and spaces ignored;
@@ -20,7 +20,7 @@ Newest note on top.
 
 ---
 
-## 2026-11-15 · Claude (session 1, area 2.3)
+## 2026-11-15 · Session 1 (area 2.3)
 
 **Done**
 - Area 2.3: `PATCH /payment-cycles/:id/mark-paid` (full + unpaid only, optional `paidAt`) and `/mark-unpaid`
@@ -35,7 +35,7 @@ Newest note on top.
 
 ---
 
-## 2026-11-15 · Claude (session 1, area 2.2)
+## 2026-11-15 · Session 1 (area 2.2)
 
 **Done**
 - `phase-1` merged into `master` and pushed (`f672334`).
@@ -51,7 +51,7 @@ Newest note on top.
 
 ---
 
-## 2026-11-15 · Claude (session 1, area 2.1)
+## 2026-11-15 · Session 1 (area 2.1)
 
 **Done**
 - Phase 1 material: `docs/reports/phase-1-area-1.pdf` (auth line by line + 15-question multiple-choice quiz, no answers).
@@ -71,7 +71,7 @@ Newest note on top.
 
 ---
 
-## 2026-11-15 · Claude (session 1, task 1.3, Phase 1 built)
+## 2026-11-15 · Session 1 (task 1.3, Phase 1 built)
 
 **Done**
 - Task 1.3: safety harness. `test/safety.ts` (`seedOwner`, `snapshot`, `checkRoute`) and `test/safety.test.ts` with the
@@ -89,7 +89,7 @@ Newest note on top.
 
 ---
 
-## 2026-11-15 · Claude (session 1, task 1.2)
+## 2026-11-15 · Session 1 (task 1.2)
 
 **Done**
 - Task 1.2: `src/modules/auth/middleware.ts` (`requireAuth(db, cfg)` → 401 « Ta session a expiré… », `currentUser(res)`).
@@ -106,7 +106,7 @@ Newest note on top.
 
 ---
 
-## 2026-11-15 · Claude (session 1, task 1.1)
+## 2026-11-15 · Session 1 (task 1.1)
 
 **Done**
 - Task 1.1, area auth (`src/modules/auth/`): register (allowlist), login (10 failures per IP per 15 min → 429),
@@ -127,7 +127,7 @@ Newest note on top.
 
 ---
 
-## 2026-11-15 · Claude (session 1, end of Phase 0)
+## 2026-11-15 · Session 1 (end of Phase 0)
 
 **Done**
 - Phase 0 report and code guide PDFs in `StudyTrack/docs/reports/` (not in git). Slide deck skipped (user's choice).
@@ -145,7 +145,7 @@ Newest note on top.
 
 ---
 
-## 2026-11-15 · Claude (session 1, later)
+## 2026-11-15 · Session 1 (later)
 
 **Done**
 - Phase 0 is built (tasks 0.3 to 0.5, on `phase-0`, not pushed):
@@ -167,13 +167,13 @@ Newest note on top.
 
 ---
 
-## 2026-11-15 · Claude (session 1)
+## 2026-11-15 · Session 1
 
 **Done**
 - Read the repo, the contract and `mock.ts`. Chose Express + Supabase Postgres (database only), one user (the mother),
   httpOnly cookie, Render with portable code.
 - Task 0.1: backend skeleton, first schema, `/api/health`, 4 PGlite tests (commit `3fc37bd`).
-- Task 0.2: adopted the build-and-learn method: `docs/PRD.md`, `docs/TRD.md`, `docs/PLAN.md` (phases), `CLAUDE.md`,
+- Task 0.2: adopted the build-and-learn method: `docs/PRD.md`, `docs/TRD.md`, `docs/PLAN.md` (phases), the working rules,
   this file. Branch renamed `backend` → `phase-0`.
 
 **Next**

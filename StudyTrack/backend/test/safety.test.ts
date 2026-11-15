@@ -8,7 +8,7 @@ import { currentUser, requireAuth } from "../src/modules/auth/middleware.ts";
 import { sessionCookie, startApi, testConfig } from "./helpers.ts";
 import { checkRoute, type Ids, type ProtectedRoute, seedOwner } from "./safety.ts";
 
-/* ROUTES PROTÉGÉES : chaque nouvelle route de l'API ajoute sa ligne ici (règle 2 de CLAUDE.md).
+/* ROUTES PROTÉGÉES : chaque nouvelle route de l'API ajoute sa ligne ici (règle 2 du projet).
    Exemples pour la phase 2 :
      { method: "GET", path: "/lessons", expect: 200 },
      { method: "PATCH", path: "/lessons/:lessonId", body: () => ({ notes: "modifié par B" }) },

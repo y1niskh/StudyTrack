@@ -1,7 +1,7 @@
 # StudyTrack
 
 Application web (Android et ordinateur) pour suivre les cours particuliers d'enfants : cours de la semaine, séances
-effectuées, cycles de paiement en espèces. Spécification : `StudyTrack_Specification_Pour_Claude.docx`.
+effectuées, cycles de paiement en espèces. Spécification : `StudyTrack_Specification.docx`.
 
 ```text
 StudyTrack/
