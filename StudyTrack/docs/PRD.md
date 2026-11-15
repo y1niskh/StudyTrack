@@ -30,6 +30,7 @@ The backend replaces that fake server so the data is safe, shared between her ph
 | F4 | Add a weekly lesson ("Maths with M. Arris every Saturday at 12:00"); stop it | §3 Cours qui se répètent |
 | F5 | Mark a full cycle as paid; correct a payment made by mistake | §3 Paiement |
 | F6 | New school year: erase all data, keep the account | §3 Nouvelle année |
+| F7 | Settings: change how many sessions make a cycle, or the price, of an enrollment (paid cycles never change) | §3 Cours suivis |
 
 ## 4. Business rules (the heart of the app)
 

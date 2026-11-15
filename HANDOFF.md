@@ -4,6 +4,24 @@ Newest note on top.
 
 ---
 
+## 2026-11-15 · Claude (session 1, end of Phase 0)
+
+**Done**
+- Phase 0 report and code guide PDFs in `StudyTrack/docs/reports/` (not in git). Slide deck skipped (user's choice).
+- `phase-0` merged into `master` together with 2 new commits from GitHub (Settings page, contract route
+  `PATCH /enrollments/:id`); pushed to `origin/master` (`a2b97e0`).
+- Branch `phase-1` created from `master`. The new route is added to PLAN 2.1, PRD (F7) and TRD (enrollments module).
+
+**Next**
+- Task 1.1 (auth: register with allowlist, login with rate limit, logout, cookie). Explain the plan and files first,
+  wait for OK.
+
+**Watch out**
+- Someone else also pushes to `master` (frontend work). Always `git fetch` and look before merging or pushing.
+- `phase-0` and `phase-1` exist only locally.
+
+---
+
 ## 2026-11-15 · Claude (session 1, later)
 
 **Done**

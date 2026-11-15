@@ -28,7 +28,7 @@ StudyTrack/backend/
     errors.ts            HttpError + the error handler
     modules/
       auth/              routes.ts · service.ts · schema.ts · middleware.ts (requireAuth) · auth.test.ts
-      enrollments/       routes.ts · service.ts · enrollments.test.ts (GET only for now)
+      enrollments/       routes.ts · service.ts · schema.ts · enrollments.test.ts (GET + PATCH cycleSize / price)
       lessons/           routes.ts · service.ts · schema.ts · lessons.test.ts
       cycles/            routes.ts · service.ts (attach / detach / markPaid / markUnpaid) · cycles.test.ts
       slots/             routes.ts · service.ts · schema.ts · slots.test.ts
