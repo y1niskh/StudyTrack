@@ -3,7 +3,7 @@ import { getSession, logout } from "../services/auth";
 import Brand from "./Brand";
 import "./Header.css";
 
-const LINKS = [{ to: "/", label: "Accueil" }, { to: "/cours", label: "Cours" }, { to: "/paiements", label: "Paiements" }];
+const LINKS = [{ to: "/", label: "Accueil" }, { to: "/cours", label: "Cours" }, { to: "/paiements", label: "Paiements" }, { to: "/parametres", label: "Paramètres" }];
 
 /* En-tête commun : titre aimanté, menu, bonjour et déconnexion. */
 export default function Header() {

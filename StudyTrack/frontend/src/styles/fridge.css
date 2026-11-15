@@ -34,7 +34,7 @@
 .magnet.big { width: 36px; height: 36px; margin-left: -18px; top: -18px; }
 
 /* Papier : grain, bande collante, reflet, ombre portée */
-.postit, .sheet, .stat, .agenda, .slip {
+.postit, .sheet, .stat, .agenda, .slip, .year-note {
   background: var(--grain), linear-gradient(180deg, rgba(0,0,0,.08), rgba(0,0,0,0) 22%),
     linear-gradient(120deg, rgba(255,255,255,.4), rgba(255,255,255,0) 45%), var(--p);
   box-shadow: 0 14px 12px -9px rgba(0,0,0,.5), 0 3px 5px rgba(0,0,0,.2), 1px 1px 0 rgba(255,255,255,.35) inset;

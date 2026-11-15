@@ -9,7 +9,7 @@
    décrites dans docs/API_CONTRACT.md : le serveur doit se comporter pareil (et être couvert par des tests).
    ============================================================================================ */
 import { dayKey } from "../lib/lessons";
-import type { DashboardData, LessonInput, LessonStatus, Slot, SlotInput } from "../types";
+import type { DashboardData, EnrollmentPatch, LessonInput, LessonStatus, Slot, SlotInput } from "../types";
 import { ApiError } from "./http";
 import type { AuthResult, User } from "./session";
 
@@ -154,6 +154,22 @@ export const deleteSlot = (id: string) =>
   tx((d) => {
     d.slots = d.slots.filter((s) => s.id !== id);
     const now = new Date().toISOString(); d.lessons = d.lessons.filter((l) => !(l.slotId === id && l.status === "planned" && l.date > now));
+  });
+
+/** Règles : `cycleSize` entier >= 1, `price` >= 0 (ou null pour l'enlever). Les cycles PAYÉS ne changent jamais ;
+    les cycles non payés prennent le nouveau prix ; aucune séance n'est déplacée. */
+export const updateEnrollment = (id: string, patch: EnrollmentPatch) =>
+  tx((d) => {
+    const e = d.enrollments.find((x) => x.id === id); if (!e) throw new ApiError("Ce cours n'existe plus.");
+    if (patch.cycleSize !== undefined) {
+      if (!Number.isInteger(patch.cycleSize) || patch.cycleSize < 1) throw new ApiError("Le nombre de cours avant paiement doit être un nombre entier, par exemple 4.");
+      e.cycleSize = patch.cycleSize;
+    }
+    if (patch.price !== undefined) {
+      if (patch.price !== null && (!Number.isFinite(patch.price) || patch.price < 0)) throw new ApiError("Le prix doit être un nombre, par exemple 6000.");
+      e.price = patch.price ?? undefined;
+      for (const c of d.cycles) if (c.enrollmentId === id && c.status === "unpaid") c.amount = e.price;
+    }
   });
 
 /** « Nouvelle année » : efface élèves, enseignants, matières, cours et paiements (le compte est gardé). */

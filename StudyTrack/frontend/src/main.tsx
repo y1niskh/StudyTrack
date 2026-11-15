@@ -5,6 +5,9 @@ import App from "./App";
 import "./index.css";
 import "./styles/fridge.css";
 import "./styles/board.css";
+import { applyTextScale, getTextScale } from "./lib/prefs";
+
+applyTextScale(getTextScale());
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
