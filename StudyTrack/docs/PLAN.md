@@ -10,7 +10,7 @@ One branch per phase (`phase-0`, `phase-1`…), made from `master`; `master` cha
 |---|---|---|
 | 0.1 | ✅ Project skeleton, first schema, `/api/health`, PGlite tests | `npm test` passes (4 tests); commit `3fc37bd` |
 | 0.2 | ✅ Method documents: PRD, TRD, PLAN, `CLAUDE.md`, `HANDOFF.md` | Documents committed |
-| 0.3 | Code layout of the TRD: `errors.ts`, `src/modules/`, tests next to their module | `/api/health` and the 4 tests still pass in the new layout |
+| 0.3 | ✅ Code layout of the TRD: `errors.ts`, `src/modules/`, tests next to their module | `/api/health` and the 4 tests still pass in the new layout |
 | 0.4 | Migrations: `schema.sql` → `migrations/001_init.sql`, `migrate.ts`, `npm run db:migrate`; tests use the same files | A test proves that running migrate twice applies nothing the second time |
 | 0.5 | Tooling: oxlint (`npm run lint`), zod installed | `npm run lint`, `npm run typecheck`, `npm test` all clean |
 

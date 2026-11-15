@@ -80,7 +80,7 @@ Render, kept portable (TRD §7).
 
 - Module structure: `src/modules/<area>/routes.ts` (reads the request), `service.ts` (rules and
   queries), `schema.ts` (zod validation), `<area>.test.ts`.
-- No queries outside `service.ts` (and `migrate.ts`); no business rules in `routes.ts`.
+- No queries outside `service.ts` (exceptions: `migrate.ts`, and the `select 1` of `/api/health` in `app.ts`); no business rules in `routes.ts`.
 - Error format: `{ "message": "texte en français" }`, the format the frontend reads (TRD §4). Messages are simple
   French for a non-technical person, no jargon, never a stack trace.
 - Only erasable TypeScript (no `enum`, no constructor parameter properties); imports end in `.ts`.
