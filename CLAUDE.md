@@ -69,7 +69,7 @@ Render, kept portable (TRD §7).
 
 1. Data is only ever reached through its owner: every query filters by `owner_id` from the token; another user's
    resource answers `404`.
-2. Every new endpoint gets a line in the safety harness (`test/safety.test.ts`) proving rule 1 and the `401`.
+2. Every new endpoint gets a line in the `PROTECTED` table of `test/safety.test.ts` proving rule 1 and the `401`.
 3. A paid cycle is locked: no route changes or deletes its sessions, and `events` is never shortened.
 4. Every operation touching a session and a cycle runs in one transaction that locks the enrollment row.
 5. Never edit an applied migration; write a new one.

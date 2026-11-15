@@ -4,6 +4,24 @@ Newest note on top.
 
 ---
 
+## 2026-11-15 · Claude (session 1, task 1.3, Phase 1 built)
+
+**Done**
+- Task 1.3: safety harness. `test/safety.ts` (`seedOwner`, `snapshot`, `checkRoute`) and `test/safety.test.ts` with the
+  `PROTECTED` table (empty: no protected route yet) and 3 self-tests proving the harness accepts a route that filters
+  by owner and catches a route that leaks or modifies another user's data.
+- 22 tests pass; lint and typecheck clean. Phase 1 (1.1–1.3) is built on `phase-1`, not merged, not pushed.
+
+**Next**
+- End-of-phase material for Phase 1 (the user asked for none before this point): area auth line-by-line PDF,
+  walkthrough, syntax list, quiz; Phase 1 report and code guide. Ask about the slide deck (skipped for Phase 0).
+- Then ask before merging `phase-1` into `master` and pushing (fetch first: someone else pushes frontend work).
+
+**Watch out**
+- Every phase 2 route adds one line to `PROTECTED`; `expect` defaults to 404, lists use `expect: 200`.
+
+---
+
 ## 2026-11-15 · Claude (session 1, task 1.2)
 
 **Done**
