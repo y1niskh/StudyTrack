@@ -1,4 +1,4 @@
--- StudyTrack : schéma de la base (Supabase Postgres). À exécuter une fois sur une base vide.
+-- Migration 001 : schéma initial. Ne jamais modifier une fois appliquée sur Supabase : écrire 002_….sql.
 -- Règles et formats : docs/API_CONTRACT.md. Les contraintes ci-dessous protègent les données même si le code a un bug.
 
 create table users (
