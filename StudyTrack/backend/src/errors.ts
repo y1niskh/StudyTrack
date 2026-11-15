@@ -17,7 +17,7 @@ export function parseBody<T extends z.ZodType>(schema: T, data: unknown): z.infe
   return result.data;
 }
 
-const GENERIC ="Une erreur est survenue. Réessaie dans un instant.";
+const GENERIC = "Une erreur est survenue. Réessaie dans un instant.";
 
 /** Dernier middleware : transforme toute erreur en réponse `{ message }`. Les détails techniques restent dans les journaux. */
 export const errorHandler: ErrorRequestHandler = (err, _req, res, _next) => {
