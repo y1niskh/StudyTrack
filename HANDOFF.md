@@ -4,6 +4,26 @@ Newest note on top.
 
 ---
 
+## 2026-11-15 · Claude (session 1, area 2.1)
+
+**Done**
+- Phase 1 material: `docs/reports/phase-1-area-1.pdf` (auth line by line + 15-question multiple-choice quiz, no answers).
+  Answers in `docs/reports/phase-1-quiz-answers.md` (local only): give them when the user asks.
+  Phase 1 report and code guide were skipped (user's choice, short on time).
+- Branch `phase-2` made from `phase-1` (phase-1 NOT merged into master yet: ask before merging/pushing).
+- Area 2.1: `GET /enrollments` (flat, with names), `PATCH /enrollments/:id` (cycleSize/price, unpaid cycles take the
+  price, paid untouched, enrollment row locked), `GET /lessons`, `/payment-cycles` (with `lessonIds`), `/slots`.
+  Helpers: `compact()` in `db.ts` (drops null fields), `idParam()` in `errors.ts` (non-uuid id → 404).
+  5 lines in the safety harness. 35 tests pass; lint and typecheck clean.
+
+**Next**
+- Area 2.2: lessons + cycle rules (`POST/PATCH/DELETE /lessons`), tests from contract §4 written first.
+
+**Watch out**
+- Each module router does `r.use(requireAuth(...))`, so an unknown path under a module answers 401 before 404.
+
+---
+
 ## 2026-11-15 · Claude (session 1, task 1.3, Phase 1 built)
 
 **Done**

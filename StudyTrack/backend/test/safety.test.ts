@@ -13,7 +13,13 @@ import { checkRoute, type Ids, type ProtectedRoute, seedOwner } from "./safety.t
      { method: "GET", path: "/lessons", expect: 200 },
      { method: "PATCH", path: "/lessons/:lessonId", body: () => ({ notes: "modifié par B" }) },
      { method: "POST", path: "/lessons", body: (ids) => ({ enrollmentId: ids.enrollmentId, date: "2026-11-20T10:00:00.000Z", status: "completed" }) }, */
-const PROTECTED: ProtectedRoute[] = [];
+const PROTECTED: ProtectedRoute[] = [
+  { method: "GET", path: "/enrollments", expect: 200 },
+  { method: "PATCH", path: "/enrollments/:enrollmentId", body: () => ({ price: 1 }) },
+  { method: "GET", path: "/lessons", expect: 200 },
+  { method: "GET", path: "/payment-cycles", expect: 200 },
+  { method: "GET", path: "/slots", expect: 200 },
+];
 
 const config = { ...testConfig, allowedEmails: ["a@example.com", "b@example.com"] };
 let t: Awaited<ReturnType<typeof startApi>>;

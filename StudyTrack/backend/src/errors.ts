@@ -26,3 +26,10 @@ export const errorHandler: ErrorRequestHandler = (err, _req, res, _next) => {
   console.error(err);
   res.status(500).json({ message: GENERIC });
 };
+
+/** Un identifiant reçu dans l'adresse. Pas un uuid : il ne peut exister, donc 404 (et pas une erreur de la base). */
+export function idParam(value: unknown, notFound: string): string {
+  const id = String(value);
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) throw new HttpError(404, notFound);
+  return id;
+}

@@ -31,3 +31,7 @@ export function pgDb(connectionString: string): Db {
     },
   };
 }
+
+/** Retire les champs `null` d'une ligne : le contrat les décrit comme facultatifs (`price?`, `notes?`…), donc absents. */
+export const compact = <T extends Record<string, unknown>>(row: T) =>
+  Object.fromEntries(Object.entries(row).filter(([, v]) => v !== null)) as Partial<T>;
