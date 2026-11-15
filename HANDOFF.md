@@ -4,6 +4,22 @@ Newest note on top.
 
 ---
 
+## 2026-11-15 · Claude (session 1, area 2.2)
+
+**Done**
+- `phase-1` merged into `master` and pushed (`f672334`).
+- Area 2.2: `POST/PATCH/DELETE /lessons` with the cycle rules (`cycleFor()` in `cycles/service.ts`), paid cycles locked
+  (409), duplicate slot date (409), enrollment row locked in every change. 13 tests from contract §4 + 3 harness lines.
+  51 tests pass; lint and typecheck clean.
+
+**Next**
+- Area 2.3: `mark-paid` / `mark-unpaid` (tests first).
+
+**Watch out**
+- `phase-2` is local only.
+
+---
+
 ## 2026-11-15 · Claude (session 1, area 2.1)
 
 **Done**

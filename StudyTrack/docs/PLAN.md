@@ -29,7 +29,7 @@ Each area: zod schema → service with SQL → routes → tests (including its l
 | # | Area | Routes | Done when |
 |---|---|---|---|
 | 2.1 | ✅ **enrollments + lists** | `GET /enrollments` (with names), `GET /lessons`, `GET /payment-cycles` (with `lessonIds`), `GET /slots`, `PATCH /enrollments/:id` (`cycleSize`, `price`) | JSON exactly as the examples of contract §3; dates and local dates in the right format. PATCH: paid cycles keep their `amount`, unpaid cycles take the new price, `price: null` removes it, no session moves, `cycleSize` 0 / negative / decimal → `400` with the contract message |
-| 2.2 | **lessons + cycle rules** | `POST/PATCH/DELETE /lessons` | Every case of contract §4 about lessons passes, written before the code |
+| 2.2 | ✅ **lessons + cycle rules** | `POST/PATCH/DELETE /lessons` | Every case of contract §4 about lessons passes, written before the code |
 | 2.3 | **payments** | `PATCH /payment-cycles/:id/mark-paid`, `/mark-unpaid` | Full cycle only; history only grows; unpaid makes sessions editable again |
 | 2.4 | **slots** | `POST /slots` (find or create student/teacher/subject/enrollment), `DELETE /slots/:id` | Names matched ignoring case and spaces; delete keeps past/confirmed sessions |
 | 2.5 | **new year** | `POST /reset-year` | Everything of the user erased, account kept, other users untouched |

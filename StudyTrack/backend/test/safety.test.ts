@@ -17,6 +17,9 @@ const PROTECTED: ProtectedRoute[] = [
   { method: "GET", path: "/enrollments", expect: 200 },
   { method: "PATCH", path: "/enrollments/:enrollmentId", body: () => ({ price: 1 }) },
   { method: "GET", path: "/lessons", expect: 200 },
+  { method: "POST", path: "/lessons", body: (ids) => ({ enrollmentId: ids.enrollmentId, date: "2026-11-20T10:00:00.000Z", status: "completed" }) },
+  { method: "PATCH", path: "/lessons/:lessonId", body: () => ({ status: "cancelled", notes: "modifié par B" }) },
+  { method: "DELETE", path: "/lessons/:lessonId" },
   { method: "GET", path: "/payment-cycles", expect: 200 },
   { method: "GET", path: "/slots", expect: 200 },
 ];
