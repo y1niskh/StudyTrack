@@ -26,3 +26,6 @@ export interface PaymentCycle {
   events?: { type: "paid" | "unpaid"; at: string }[];
 }
 export interface DashboardData { enrollments: Enrollment[]; lessons: Lesson[]; cycles: PaymentCycle[]; slots: Slot[] }
+
+/** Modification d'un cours suivi. `price: null` retire le prix. */
+export interface EnrollmentPatch { cycleSize?: number; price?: number | null }

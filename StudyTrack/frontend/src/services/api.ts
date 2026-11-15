@@ -4,13 +4,13 @@
 
    GET    /enrollments          GET    /lessons         GET    /payment-cycles      GET /slots
    POST   /lessons              PATCH  /lessons/:id     DELETE /lessons/:id
-   POST   /slots                DELETE /slots/:id
+   POST   /slots                DELETE /slots/:id       PATCH  /enrollments/:id
    PATCH  /payment-cycles/:id/mark-paid                 PATCH  /payment-cycles/:id/mark-unpaid
-   POST   /reset-year
+   PATCH  /enrollments/:id      POST   /reset-year
    (+ POST /auth/register, POST /auth/login dans auth.ts)
    Avec VITE_USE_MOCK=true, chaque fonction est redirigée vers la fausse API de mock.ts.
    ============================================================================================ */
-import type { DashboardData, LessonInput, SlotInput } from "../types";
+import type { DashboardData, EnrollmentPatch, LessonInput, SlotInput } from "../types";
 import { MOCK, req } from "./http";
 
 const mock = () => import("./mock");
@@ -68,6 +68,12 @@ export async function markPaid(id: string): Promise<void> {
 export async function markUnpaid(id: string): Promise<void> {
   if (MOCK) return (await mock()).markUnpaid(id);
   await req(`/payment-cycles/${id}/mark-unpaid`, { method: "PATCH", body: json({}) });
+}
+
+/** Change le nombre de cours avant paiement et/ou le prix d'un cours suivi (le prix s'applique aux cycles non payés). */
+export async function updateEnrollment(id: string, patch: EnrollmentPatch): Promise<void> {
+  if (MOCK) return (await mock()).updateEnrollment(id, patch);
+  await req(`/enrollments/${id}`, { method: "PATCH", body: json(patch) });
 }
 
 /** « Nouvelle année » : efface toutes les données de l'utilisateur (le compte est gardé). */

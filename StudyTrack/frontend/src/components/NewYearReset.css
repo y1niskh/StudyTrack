@@ -9,4 +9,5 @@
 .year-note .primary { min-height: 52px; margin-top: 0; font: 1.35rem var(--font-body); }
 .year-confirm { display: grid; gap: .5rem; padding: .75rem; border-radius: 8px; background: rgba(255,255,255,.6); }
 .year-error { color: #8f1d17; }
-.year-note .year-danger { background: #b3261e; box-shadow: 0 3px 0 #7a1510; }
+.year-note .primary.year-danger { background: #b3261e; box-shadow: 0 3px 0 #7a1510; }
+.year-note > .ghost { margin-top: .4rem; }

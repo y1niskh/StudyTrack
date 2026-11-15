@@ -22,6 +22,7 @@ Variables (`.env.example`, jamais de secret) : `VITE_API_URL` (racine de l'API, 
 | `/` | `pages/DashboardPage.tsx` | Accueil : cours de demain, à payer / payés cette semaine |
 | `/cours` | `pages/LessonsPage.tsx` | Semaine par semaine, cours à confirmer, cours qui se répètent |
 | `/paiements` | `pages/PaymentsPage.tsx` | À payer (toutes semaines), cycles en cours, historique, correction d'un paiement |
+| `/parametres` | `pages/SettingsPage.tsx` | Taille du texte, compte, cours suivis (cycle et prix), sauvegarde, « Nouvelle année » |
 
 Les routes protégées sont dans `App.tsx` (sans session on renvoie vers `/connexion`).
 
@@ -39,9 +40,11 @@ src/
 │  ├─ cycles.ts         semaine dimanche→samedi, cycles « à payer », en retard, couleurs par élève
 │  ├─ slots.ts          calcul des cours qui se répètent (occurrences)
 │  ├─ lessons.ts        dates/heures et libellés
+│  ├─ prefs.ts          taille du texte (réglage local, localStorage)
+│  ├─ backup.ts         fichier de sauvegarde JSON
 │  └─ validation.ts     validation du formulaire de connexion
 ├─ pages/               une page = un fichier .tsx + son .css
-├─ components/          Header, Brand, PayCard, formulaires (LessonForm, SlotForm), NewYearReset (réservé aux Paramètres)
+├─ components/          Header, Brand, PayCard, formulaires (LessonForm, SlotForm), NewYearReset (page Paramètres)
 ├─ styles/              fridge.css (porte de frigo, aimants, papier) et board.css (éléments communs aux pages : résumés, cartes, fiche, boutons)
 └─ types.ts             formes JSON échangées avec l'API
 ```
@@ -53,4 +56,4 @@ port 5000 (proxy Vite `/api`), puis supprimer `src/services/mock.ts` quand tout 
 
 ## Reste à faire
 
-Pages à venir : paramètres (y compris le composant `NewYearReset`, déjà écrit), PWA. Voir `../docs/API_CONTRACT.md` §7 pour les routes déjà prévues.
+À venir : PWA (installation sur téléphone, hors ligne), modification d'un cours qui se répète, renommer élèves/enseignants/matières. Voir `../docs/API_CONTRACT.md` §7 pour les routes déjà prévues.
