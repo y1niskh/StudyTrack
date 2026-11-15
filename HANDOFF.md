@@ -4,6 +4,22 @@ Newest note on top.
 
 ---
 
+## 2026-11-15 · Claude (session 1, Phase 2 built)
+
+**Done**
+- Area 2.4: `POST /slots` (find or create student/teacher/subject/enrollment by name, case and spaces ignored;
+  cycleSize/price only when creating) and `DELETE /slots/:id` (removes future planned sessions only).
+- Area 2.5: `POST /reset-year` (deletes students/teachers/subjects, cascade does the rest; account kept).
+- Phase 2 complete on `phase-2`: every route of the contract exists. 69 tests pass; lint and typecheck clean.
+
+**Next**
+- Ask before merging `phase-2` into `master` and pushing (fetch first). Then Phase 3 (frontend cookie, Supabase, Render).
+
+**Watch out**
+- Deleting a slot sets `slot_id` to null on the sessions it keeps.
+
+---
+
 ## 2026-11-15 · Claude (session 1, area 2.3)
 
 **Done**

@@ -24,6 +24,9 @@ const PROTECTED: ProtectedRoute[] = [
   { method: "PATCH", path: "/payment-cycles/:cycleId/mark-paid" },
   { method: "PATCH", path: "/payment-cycles/:cycleId/mark-unpaid" },
   { method: "GET", path: "/slots", expect: 200 },
+  { method: "POST", path: "/slots", expect: 201, body: () => ({ studentName: "Sara", subjectName: "Maths", teacherName: "M. Arris", weekday: 6, time: "12:00", cycleSize: 4 }) },
+  { method: "DELETE", path: "/slots/:slotId" },
+  { method: "POST", path: "/reset-year", expect: 204 },
 ];
 
 const config = { ...testConfig, allowedEmails: ["a@example.com", "b@example.com"] };
