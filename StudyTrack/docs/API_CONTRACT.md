@@ -76,6 +76,15 @@ Exemples :
 { "id": "s1", "enrollmentId": "e1", "weekday": 6, "time": "12:00", "since": "2026-11-11" }
 ```
 
+### Cours suivis (inscriptions)
+| Route | Corps | Réponse |
+|---|---|---|
+| `PATCH /enrollments/:id` | `{ cycleSize?, price? }` | `200` l'`Enrollment` (avec les noms, voir §2) |
+
+- `cycleSize` : entier ≥ 1 (sinon `400` « Le nombre de cours avant paiement doit être un nombre entier, par exemple 4. »). `price` : nombre ≥ 0, ou **`null` pour retirer le prix** (sinon `400` « Le prix doit être un nombre, par exemple 6000. »).
+- **Les cycles déjà payés ne changent jamais.** Un nouveau `price` est recopié dans `amount` de tous les cycles **non payés** de cette inscription. Aucune séance n'est déplacée d'un cycle à l'autre. Un cycle non payé qui contient déjà au moins `cycleSize` séances devient « à payer » (le frontend le calcule) ; un cycle qui en contient plus que le nouveau `cycleSize` reste tel quel.
+- Le frontend ne modifie que ces deux champs ; renommer un élève, un enseignant ou une matière viendra plus tard.
+
 ### Séances
 | Route | Corps | Réponse |
 |---|---|---|
@@ -137,6 +146,7 @@ Reprises du cahier des charges, avec les décisions prises pour ce qu'il laissai
 - `mark-paid` sur un cycle incomplet → `409`.
 - Ajout rétroactif → premier cycle non payé non plein, jamais un cycle payé.
 - Deux inscriptions d'un même élève ont chacune leurs cycles (aucune confusion).
+- `PATCH /enrollments/:id` : les cycles payés gardent leur `amount` ; les cycles non payés prennent le nouveau prix ; `cycleSize` 0, négatif ou décimal → `400`.
 - Un utilisateur ne peut ni lire ni modifier les données d'un autre (`404`).
 
 ## 5. Ce que le frontend calcule seul (le backend n'a pas à le faire)
@@ -156,12 +166,14 @@ Reprises du cahier des charges, avec les décisions prises pour ce qu'il laissai
 ## 7. Prévu par le cahier des charges, pas encore utilisé par le frontend
 
 Le frontend ne les appelle pas aujourd'hui ; les prochaines pages les utiliseront :
-`GET /auth/me`, CRUD `/students`, `/teachers`, `/subjects`, `/enrollments` (écriture) et la modification d'un cours qui se répète.
+`GET /auth/me`, CRUD `/students`, `/teachers`, `/subjects`, la création/suppression directe d'`/enrollments`, le changement de mot de passe, et la modification d'un cours qui se répète.
+
+**Gardé seulement dans le navigateur** (rien à faire côté serveur) : la taille du texte choisie dans *Paramètres* (`localStorage`, `frontend/src/lib/prefs.ts`) et le fichier de sauvegarde JSON, construit par le frontend à partir des quatre `GET` de lecture (`frontend/src/lib/backup.ts`).
 
 ## 8. Brancher le frontend sur le vrai backend
 
 1. Lancer le backend sur le port **5000** (ou changer le proxy dans `frontend/vite.config.ts`).
 2. Dans `frontend/.env.development`, mettre `VITE_USE_MOCK=false` (et `VITE_API_URL=/api`).
 3. `cd frontend`, `npm install`, `npm run dev`.
-4. Parcours de recette : créer un compte → se connecter → ajouter un cours « Maths, M. Arris, chaque samedi 12:00 » (page *Cours*) → confirmer des séances « à confirmer » jusqu'à remplir un cycle → l'accueil affiche « À payer cette semaine » → « Marquer comme payé » → page *Paiements* : le paiement est dans l'historique → « Corriger ce paiement » le remet à payer.
+4. Parcours de recette : créer un compte → se connecter → ajouter un cours « Maths, M. Arris, chaque samedi 12:00 » (page *Cours*) → confirmer des séances « à confirmer » jusqu'à remplir un cycle → l'accueil affiche « À payer cette semaine » → « Marquer comme payé » → page *Paiements* : le paiement est dans l'historique → « Corriger ce paiement » le remet à payer → page *Paramètres* : changer « tous les … cours » ou le prix d'un cours suivi ; « Nouvelle année » vide les données.
 5. Quand tout marche : supprimer `frontend/src/services/mock.ts`, puis retirer dans `api.ts` les lignes `if (MOCK) …` (et la ligne `const mock = …`) et dans `auth.ts` la branche `MOCK`.
