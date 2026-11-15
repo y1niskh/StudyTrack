@@ -4,6 +4,23 @@ Newest note on top.
 
 ---
 
+## 2026-11-15 · Claude (session 1, task 1.2)
+
+**Done**
+- Task 1.2: `src/modules/auth/middleware.ts` (`requireAuth(db, cfg)` → 401 « Ta session a expiré… », `currentUser(res)`).
+- `app.ts`: every `/api` request other than GET/HEAD must have `Content-Type: application/json`, else 415 (CSRF).
+- 19 tests pass (5 new in `middleware.test.ts`, on a small test-only app since no real route is protected yet);
+  lint and typecheck clean. TRD §4 lists 415 and 429.
+
+**Next**
+- Task 1.3: safety harness `test/safety.test.ts`. Explain the plan first, wait for OK.
+
+**Watch out**
+- No PDFs until the end of Phase 1 (see the note below).
+- The frontend must keep sending `Content-Type: application/json` on DELETE and on logout (task 3.1), even without a body.
+
+---
+
 ## 2026-11-15 · Claude (session 1, task 1.1)
 
 **Done**

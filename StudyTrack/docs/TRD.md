@@ -75,7 +75,7 @@ lessons        id, owner_id, enrollment_id, date, status, notes, slot_id, occurr
 - **Error format: `{ "message": "texte en français" }`.** The frontend shows `message` as is
   (`frontend/src/services/http.ts`). This overrides the `{ error: { code, message } }` format of the generic method.
 - Codes: `400` invalid input · `401` not logged in / token expired · `403` sign-up not allowed ·
-  `404` doesn't exist **or belongs to someone else** · `409` business conflict · `500` (generic message, details only in the server log).
+  `404` doesn't exist **or belongs to someone else** · `409` business conflict · `415` a request that changes data without `Content-Type: application/json` · `429` too many failed logins · `500` (generic message, details only in the server log).
 - Every query filters by `owner_id = <user from the token>`. Never trust an id or owner from the client.
 - Every operation touching a lesson and a cycle runs in **one transaction** and starts by locking the enrollment row
   (`select … for update`), so two requests at the same time can't put sessions in the wrong cycle.

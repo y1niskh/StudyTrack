@@ -19,7 +19,7 @@ One branch per phase (`phase-0`, `phase-1`…), made from `master`; `master` cha
 | # | Task | Done when |
 |---|---|---|
 | 1.1 | ✅ Area **auth**: `POST /auth/register` (allowlist), `/auth/login` (rate limit in database), `/auth/logout` (token_version), cookie | Tests: allowed / refused sign-up, duplicate email `409`, wrong password `401` same message, 11th attempt refused, logout invalidates the old cookie |
-| 1.2 | `requireAuth` middleware + JSON-only check on routes that change data | Tests: no cookie `401`, forged or old-version token `401`, form-encoded `POST` refused |
+| 1.2 | ✅ `requireAuth` middleware + JSON-only check on routes that change data | Tests: no cookie `401`, forged or old-version token `401`, form-encoded `POST` refused |
 | 1.3 | **Safety harness** `test/safety.test.ts` (TRD §6), empty table ready for the routes | The harness runs; adding a route is one line |
 
 ## Phase 2: features (branch `phase-2`), one area at a time
