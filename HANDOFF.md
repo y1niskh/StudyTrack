@@ -4,6 +4,22 @@ Newest note on top.
 
 ---
 
+## 2026-11-23 · Session 2 (task 3.0)
+
+**Done**
+- Phase 2 merged into `master` and pushed earlier (`b6682f0`), plus a cleanup commit (`21b93c5`).
+- Branch `phase-3` from `master`. Task 3.0: `migrations/002_lock_rest_api.sql` turns on row-level security (no rules)
+  on all 10 tables, closing Supabase's automatic REST API; the server (table owner) is not affected. New test: every
+  table of `public` has RLS (it fails with only 001 applied: 9 tables). 70 tests pass; lint and typecheck clean.
+
+**Next**
+- Task 3.1: frontend login cookie (see `phase-3-guide.pdf`). Explain first, wait for OK.
+
+**Watch out**
+- Every new table needs `enable row level security` in its migration, or the RLS test fails.
+
+---
+
 ## 2026-11-15 · Session 1 (Phase 2 built)
 
 **Done**

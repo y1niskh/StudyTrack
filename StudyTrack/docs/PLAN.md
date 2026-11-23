@@ -38,6 +38,7 @@ Each area: zod schema → service with SQL → routes → tests (including its l
 
 | # | Task | Done when |
 |---|---|---|
+| 3.0 | ✅ Migration `002_lock_rest_api.sql`: row-level security on every table (closes Supabase's automatic REST API) | A test proves every table of `public` has RLS |
 | 3.1 | Frontend: cookie (`credentials: "include"`, no `Authorization` header, `localStorage` keeps only `user`), logout calls the API | Frontend `npm run build` passes |
 | 3.2 | Express serves `frontend/dist` in production; root `npm run build` / `npm start` | One local process serves the site and the API |
 | 3.3 | Supabase project (Frankfurt or Paris), `npm run db:migrate` on it | `/api/health` answers with the real database |
