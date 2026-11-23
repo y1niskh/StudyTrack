@@ -1,5 +1,5 @@
 import { NavLink, useNavigate } from "react-router-dom";
-import { getSession, logout } from "../services/auth";
+import { getSession, signOut } from "../services/auth";
 import Brand from "./Brand";
 import "./Header.css";
 
@@ -13,7 +13,7 @@ export default function Header() {
       <Brand small />
       <div className="who">
         <p className="hello">Bonjour {getSession()?.user.name} !</p>
-        <button className="magnet-btn" onClick={() => { logout(); navigate("/connexion"); }}>
+        <button className="magnet-btn" onClick={async () => { await signOut(); navigate("/connexion"); }}>
           <svg className="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 4H5v16h5M15 8l4 4-4 4M19 12H9" /></svg> Se déconnecter
         </button>
       </div>

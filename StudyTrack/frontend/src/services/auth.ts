@@ -1,15 +1,22 @@
 import { MOCK, req } from "./http";
-import { saveSession, type AuthResult } from "./session";
+import { logout, saveSession, type Session } from "./session";
 
 export { ApiError } from "./http";
-export { getSession, logout, type User } from "./session";
+export { getSession, type User } from "./session";
 
 /** POST /api/auth/register  { name, email, password }  ou  POST /api/auth/login  { email, password }
-    Réponse attendue : { token, user: { id, name, email } } (voir docs/API_CONTRACT.md). */
+    Réponse : { user: { id, name, email } } ; le jeton arrive dans un cookie httpOnly (voir docs/API_CONTRACT.md). */
 export async function authenticate(path: "register" | "login", body: Record<string, string>) {
   const result = MOCK
     ? await (await import("./mock")).mockAuth(path, body)
-    : await req<AuthResult>(`/auth/${path}`, { method: "POST", body: JSON.stringify(body) }, false);
-  saveSession(result);
+    : await req<Session>(`/auth/${path}`, { method: "POST", body: JSON.stringify(body) }, false);
+  saveSession({ user: result.user });
   return result.user;
+}
+
+/** Se déconnecter : le serveur invalide tous les jetons de ce compte (téléphone et ordinateur) et efface le cookie.
+    Même sans réseau, on oublie la session dans ce navigateur. */
+export async function signOut() {
+  if (!MOCK) await req("/auth/logout", { method: "POST", body: "{}" }, false).catch(() => {});
+  logout();
 }

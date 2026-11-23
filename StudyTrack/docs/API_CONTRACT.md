@@ -20,7 +20,7 @@ Le code de référence est dans le frontend :
 
 - **Base** : `VITE_API_URL` (par défaut `/api`). Toutes les routes ci-dessous sont relatives à cette base.
 - **Format** : JSON dans les deux sens (`Content-Type: application/json`).
-- **Authentification** : `Authorization: Bearer <jwt>` sur toutes les routes sauf `register` et `login`.
+- **Authentification** : cookie `httpOnly` `st_session` (posé par `register` / `login`, effacé par `logout`), envoyé par le navigateur sur toutes les routes. Le site et l'API sont à la même adresse. Toute requête qui modifie (POST, PATCH, DELETE) doit avoir `Content-Type: application/json`, sinon `415`.
 - **Identifiants** : chaînes nommées **`id`** (pas `_id`). Avec Mongoose, ajouter une transformation `toJSON` qui renomme `_id` en `id` et retire `__v` et `ownerId`.
 - **Dates et heures** : chaînes ISO 8601 en **UTC** (`"2026-11-14T11:00:00.000Z"`). Exceptions, qui sont des valeurs *locales* (Algérie, UTC+1 toute l'année) : `Slot.since` et `Lesson.occurrence` (`"AAAA-MM-JJ"`) et `Slot.time` (`"HH:MM"`).
 - **Erreurs** : bon code HTTP et corps `{ "message": "texte en français" }`. Le frontend affiche `message` **tel quel** à une personne âgée : il doit être clair, sans jargon technique ni stack trace.
@@ -54,8 +54,9 @@ Slot ★       { ownerId, enrollmentId, weekday, time, since }
 ### Authentification
 | Route | Corps | Réponse |
 |---|---|---|
-| `POST /auth/register` | `{ name, email, password }` | `201` `{ token, user: { id, name, email } }` |
-| `POST /auth/login` | `{ email, password }` | `200` `{ token, user: { id, name, email } }` |
+| `POST /auth/register` | `{ name, email, password }` | `201` `{ user: { id, name, email } }` + cookie |
+| `POST /auth/login` | `{ email, password }` | `200` `{ user: { id, name, email } }` + cookie |
+| `POST /auth/logout` | `{}` | `204`, cookie effacé ; tous les jetons du compte deviennent invalides |
 
 Erreurs : `409` « Un compte existe déjà avec cet e-mail. Connecte-toi plutôt. » · `401` « E-mail ou mot de passe incorrect. » (même message que l'e-mail soit inconnu ou le mot de passe faux). Mot de passe haché (bcrypt/Argon2), jamais renvoyé. Le frontend valide : e-mail correct, mot de passe d'au moins 8 caractères, nom d'au moins 2 caractères (à re-valider côté serveur).
 
@@ -159,7 +160,7 @@ Reprises du cahier des charges, avec les décisions prises pour ce qu'il laissai
 ## 6. Sécurité et configuration
 
 - Mots de passe : bcrypt ou Argon2. JWT signé avec un secret long, durée limitée (le frontend gère l'expiration : un `401` déconnecte).
-- **Stockage du jeton côté navigateur** : aujourd'hui `localStorage` (`frontend/src/services/session.ts`). Un **cookie `httpOnly`** posé par le serveur serait plus sûr contre le vol de jeton ; si vous le choisissez, le changement côté frontend se limite à `http.ts` et `session.ts` (ajouter `credentials: "include"`, retirer l'en-tête `Authorization`).
+- **Jeton** : dans le cookie `httpOnly` (`Secure` en production, `SameSite=Strict`, `Path=/api`), jamais lisible par un script de la page. Le `localStorage` ne garde que `{ user }` pour l'affichage (`frontend/src/services/session.ts`).
 - CORS : en développement le proxy de Vite (`/api` → `http://localhost:5000`) évite le problème. En production, autoriser uniquement l'adresse du site.
 - Valider **toutes** les entrées côté serveur (le frontend valide pour l'ergonomie, pas pour la sécurité). Limiter les tentatives de connexion. Ne jamais committer `.env`, clés ou URI MongoDB.
 

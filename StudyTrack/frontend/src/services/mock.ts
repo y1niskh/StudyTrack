@@ -11,7 +11,7 @@
 import { dayKey } from "../lib/lessons";
 import type { DashboardData, EnrollmentPatch, LessonInput, LessonStatus, Slot, SlotInput } from "../types";
 import { ApiError } from "./http";
-import type { AuthResult, User } from "./session";
+import type { Session, User } from "./session";
 
 const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
@@ -23,7 +23,7 @@ async function sha256(text: string) {
   const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
   return Array.from(new Uint8Array(buf), (b) => b.toString(16).padStart(2, "0")).join("");
 }
-export async function mockAuth(path: "register" | "login", b: Record<string, string>): Promise<AuthResult> {
+export async function mockAuth(path: "register" | "login", b: Record<string, string>): Promise<Session> {
   await wait(500);
   const users = readUsers();
   const email = b.email.toLowerCase();
@@ -36,7 +36,7 @@ export async function mockAuth(path: "register" | "login", b: Record<string, str
   } else if (!found || found.hash !== hash) {
     throw new ApiError("E-mail ou mot de passe incorrect.");
   }
-  return { token: "mock-token", user: { id: found.id, name: found.name, email: found.email } };
+  return { user: { id: found.id, name: found.name, email: found.email } };
 }
 
 /* ---------- Données ---------- */

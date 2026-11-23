@@ -4,6 +4,22 @@ Newest note on top.
 
 ---
 
+## 2026-11-23 · Session 2 (task 3.1)
+
+**Done**
+- Task 3.1: frontend uses the login cookie. `session.ts` keeps only `{ user }`; `http.ts` sends no `Authorization` header
+  and always `Content-Type: application/json`; `auth.ts` reads `{ user }` and has `signOut()` (calls `POST /auth/logout`);
+  the header button uses it; the mock returns `{ user }`. `API_CONTRACT.md` auth lines updated to the cookie.
+- Frontend `npm run build` passes. Not tested in a browser against the real backend yet (needs a database: task 3.3/3.4).
+
+**Next**
+- Task 3.2: one server for site + API. Explain first, wait for OK.
+
+**Watch out**
+- Frontend lint shows 4 old `set-state-in-effect` warnings in pages (not touched by this task).
+
+---
+
 ## 2026-11-23 · Session 2 (task 3.0)
 
 **Done**
