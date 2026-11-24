@@ -30,7 +30,7 @@ if (import.meta.filename === process.argv[1]) {
     console.error("DATABASE_URL manquant : copier backend/.env.example en backend/.env et le remplir.");
     process.exit(1);
   }
-  migrate(pgDb(url)).then(
+  migrate(pgDb(url, process.env.DATABASE_CA_CERT)).then(
     (applied) => {
       console.log(applied.length ? `Migrations appliquées : ${applied.join(", ")}` : "Base déjà à jour.");
       process.exit(0);

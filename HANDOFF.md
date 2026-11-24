@@ -4,6 +4,23 @@ Newest note on top.
 
 ---
 
+## 2026-11-24 · Session 2 (3.3 prepared)
+
+**Done**
+- `db.ts`: `sslOptions(DATABASE_CA_CERT)` = encrypted and verified connection (`rejectUnauthorized: true`); no
+  certificate = no SSL (tests, local). `server.ts` refuses to start in production without the certificate;
+  `npm run db:migrate` uses it too. `.env.example` documents it. `test/db.test.ts` (3 tests). 78 tests pass.
+
+**Next**
+- Task 3.3 (you): create the Supabase project, download the certificate, fill `backend/.env`, `npm run db:migrate`.
+
+**Watch out**
+- Never add `?sslmode=…` to `DATABASE_URL`: pg would let it override the verified SSL settings.
+- Not yet tried against a real Supabase: if `db:migrate` reports a certificate or host name error, check the
+  certificate first.
+
+---
+
 ## 2026-11-24 · Session 2 (task 3.2)
 
 **Done**

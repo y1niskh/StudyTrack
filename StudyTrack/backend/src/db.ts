@@ -9,8 +9,16 @@ export interface Db {
   tx<T>(fn: (q: Query) => Promise<T>): Promise<T>;
 }
 
-export function pgDb(connectionString: string): Db {
-  const pool = new pg.Pool({ connectionString, max: 5 });
+/** Connexion chiffrée ET vérifiée avec le certificat de Supabase (DATABASE_CA_CERT) : personne ne peut se faire passer
+    pour la base. Sans certificat (tests, base locale) : pas de SSL. Dans un fichier .env, les retours à la ligne du
+    certificat peuvent être écrits `\n`. */
+export function sslOptions(ca: string | undefined) {
+  return ca ? { ca: ca.replace(/\\n/g, "\n"), rejectUnauthorized: true } : undefined;
+}
+
+// Ne pas ajouter `?sslmode=…` à DATABASE_URL : ce paramètre remplacerait ces réglages SSL.
+export function pgDb(connectionString: string, ca?: string): Db {
+  const pool = new pg.Pool({ connectionString, max: 5, ssl: sslOptions(ca) });
   pool.on("error", (e) => console.error("Erreur de connexion à la base :", e.message)); // évite un arrêt du serveur
 
   return {
