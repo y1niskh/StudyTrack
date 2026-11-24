@@ -1,0 +1,9 @@
+{
+  "name": "studytrack",
+  "private": true,
+  "engines": { "node": ">=22.18" },
+  "scripts": {
+    "build": "npm ci --prefix frontend && npm run build --prefix frontend && npm ci --prefix backend",
+    "start": "npm start --prefix backend"
+  }
+}

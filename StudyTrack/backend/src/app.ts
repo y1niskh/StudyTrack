@@ -16,7 +16,8 @@ import { yearRoutes } from "./modules/year/routes.ts";
 export function createApp(db: Db, config: Config) {
   const app = express();
   app.set("trust proxy", 1); // derrière le proxy de l'hébergeur : vraie IP du client, cookies Secure
-  app.use(helmet());
+  // « upgrade-insecure-requests » force le HTTPS : utile en production, mais casserait le site en local (http://localhost).
+  app.use(helmet({ contentSecurityPolicy: { directives: { upgradeInsecureRequests: config.secureCookies ? [] : null } } }));
   app.use(express.json({ limit: "100kb" }));
   app.use(cookieParser());
 
@@ -42,6 +43,17 @@ export function createApp(db: Db, config: Config) {
     res.status(404).json({ message: "Cette adresse n'existe pas." });
   });
   app.use("/api", api);
+
+  // Le site construit, à la même adresse que l'API : le cookie SameSite=Strict marche, pas de CORS.
+  // Toute autre adresse en GET (/connexion, /paiements…) reçoit index.html : c'est le routeur de React qui choisit la page.
+  const siteDir = config.siteDir;
+  if (siteDir) {
+    app.use(express.static(siteDir, { index: "index.html" }));
+    app.use((req, res, next) => {
+      if (req.method !== "GET" && req.method !== "HEAD") return next();
+      res.sendFile("index.html", { root: siteDir });
+    });
+  }
 
   app.use(errorHandler);
   return app;

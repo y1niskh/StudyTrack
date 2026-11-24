@@ -4,6 +4,25 @@ Newest note on top.
 
 ---
 
+## 2026-11-24 · Session 2 (task 3.2)
+
+**Done**
+- Task 3.2: Express serves the built site (`config.siteDir`, default `frontend/dist` when it exists) with an
+  `index.html` fallback for GET, after `/api`. CSP keeps `upgrade-insecure-requests` only in production.
+  Root `StudyTrack/package.json`: `npm run build` (installs + builds frontend, installs backend), `npm start`.
+- `test/site.test.ts` (5 tests). 75 tests pass; lint and typecheck clean.
+- Checked in a browser on one local server (in-memory database): sign-up, dashboard data, logout (back to
+  `/connexion`, API then 401); `localStorage` holds only `{ user }`, the cookie is invisible to scripts.
+
+**Next**
+- Task 3.3 (you): Supabase project, certificate, `.env`, `npm run db:migrate` (see `phase-3-guide.pdf`).
+  The `DATABASE_CA_CERT` change in `db.ts` is still to do.
+
+**Watch out**
+- `npm run build` at the root runs `npm ci`, which reinstalls `node_modules` from the lock files.
+
+---
+
 ## 2026-11-23 · Session 2 (task 3.1)
 
 **Done**
