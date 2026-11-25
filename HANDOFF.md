@@ -4,6 +4,27 @@ Newest note on top.
 
 ---
 
+## 2026-11-25 · Session 2 (tasks 3.3 and 3.4)
+
+**Done**
+- 3.3: Supabase project (region eu-west-1, Ireland), session pooler, verified SSL, `npm run db:migrate` applied
+  001 + 002; `/api/health` answers with the real database.
+- 3.4: full path on one local server with Supabase, in a browser, with a temporary test account
+  (`ALLOWED_EMAILS` overridden on the command line only): stranger sign-up 403, login, weekly lesson, 4 done
+  sessions → cycle 1 full and due on the home page, mark paid (events: paid), Payments history, correct the
+  payment (back to unpay, paidAt removed, events: paid, unpaid), Settings cycleSize 8 + price 7000 (unpaid cycle
+  took 7000), new year (all lists empty, still logged in), logout (401), login again. The test account was then
+  deleted; Supabase keeps 1 account (the user's own) and 0 data rows.
+
+**Next**
+- Task 3.5 (you): Render deployment (see `phase-3-guide.pdf`). Use a NEW `JWT_SECRET` on Render.
+
+**Watch out**
+- Stopping an `npm run dev` task can leave its `node` child holding port 5000: check with `netstat -ano`.
+- The user's own test account is still in Supabase: delete it before launch or keep it.
+
+---
+
 ## 2026-11-24 · Session 2 (3.3 prepared)
 
 **Done**
