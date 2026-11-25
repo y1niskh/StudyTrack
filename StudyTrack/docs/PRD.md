@@ -7,7 +7,7 @@ Details of every route and JSON shape: `API_CONTRACT.md`. This document says *wh
 StudyTrack helps a mother follow her children's private lessons in Algeria: which lessons happen each week, which
 ones took place, and when a block of lessons (a **cycle**) must be paid in cash to the teacher.
 
-The frontend (React, `frontend/`) is finished and runs today on a fake server in the browser (`mock.ts`).
+The frontend (React, `frontend/`) talks to this backend; the fake browser server it started with (`mock.ts`) was removed at launch.
 The backend replaces that fake server so the data is safe, shared between her phone and computer, and never lost.
 
 ## 2. Users

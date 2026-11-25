@@ -6,13 +6,12 @@ React 19 + TypeScript + Vite + React Router. Les textes de l'interface et les co
 
 ```powershell
 npm install
-npm run dev          # serveur de développement (fausse API par défaut, voir .env.development)
+npm run dev          # serveur de développement ; lancer aussi le backend (port 5000, voir ../backend)
 npm run build        # vérification TypeScript + build de production
 npm run lint
 ```
 
-Variables (`.env.example`, jamais de secret) : `VITE_API_URL` (racine de l'API, `/api` par défaut) et
-`VITE_USE_MOCK` (`true` = fausse API dans le navigateur, `false` = vrai backend).
+Variable (`.env.example`, jamais de secret) : `VITE_API_URL` (racine de l'API, `/api` par défaut).
 
 ## Pages
 
@@ -33,9 +32,8 @@ src/
 ├─ services/            tout ce qui parle au serveur
 │  ├─ api.ts            LE CONTRAT : une fonction par route du backend (commentée)
 │  ├─ auth.ts           connexion / inscription
-│  ├─ http.ts           fetch commun : jeton, erreurs {message}, déconnexion sur 401
-│  ├─ session.ts        jeton et utilisateur connecté (localStorage)
-│  └─ mock.ts           FAUSSE API de développement + règles métier de référence (supprimable)
+│  ├─ http.ts           fetch commun : JSON, erreurs {message}, déconnexion sur 401 (le jeton est dans un cookie httpOnly)
+│  └─ session.ts        utilisateur connecté (localStorage, jamais le jeton)
 ├─ lib/                 logique pure, sans React ni réseau
 │  ├─ cycles.ts         semaine dimanche→samedi, cycles « à payer », en retard, couleurs par élève
 │  ├─ slots.ts          calcul des cours qui se répètent (occurrences)
@@ -49,10 +47,11 @@ src/
 └─ types.ts             formes JSON échangées avec l'API
 ```
 
-## Pour brancher le vrai backend
+## Le backend
 
-Tout est expliqué dans `../docs/API_CONTRACT.md` (section 8). En résumé : `VITE_USE_MOCK=false`, le backend sur le
-port 5000 (proxy Vite `/api`), puis supprimer `src/services/mock.ts` quand tout marche.
+Le frontend parle au vrai backend (`../backend`, Express + Supabase Postgres). En développement, le proxy de Vite
+envoie `/api` vers http://localhost:5000. En production, le même serveur sert le site construit et l'API.
+Les règles métier (cycles, paiements) sont dans le backend : `../backend/src/modules/`.
 
 ## Reste à faire
 

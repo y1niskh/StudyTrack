@@ -43,5 +43,5 @@ Each area: zod schema → service with SQL → routes → tests (including its l
 | 3.2 | ✅ Express serves `frontend/dist` in production; root `npm run build` / `npm start` | One local process serves the site and the API |
 | 3.3 | ✅ Supabase project (Frankfurt or Paris), `npm run db:migrate` on it | `/api/health` answers with the real database |
 | 3.4 | ✅ Local end-to-end with `VITE_USE_MOCK=false`: the path of contract §8 | Every step of the path works |
-| 3.5 | Render deploy, environment variables, HTTPS check, her account created | She can log in on her phone |
-| 3.6 | Remove `mock.ts` and the `MOCK` branches | Frontend builds without them |
+| 3.5 | ✅ Render deploy, environment variables, HTTPS check, her account created | She can log in on her phone |
+| 3.6 | ✅ Remove `mock.ts` and the `MOCK` branches | Frontend builds without them |

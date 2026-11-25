@@ -5,8 +5,6 @@ export class ApiError extends Error {}
 
 /** Racine de l'API : `/api` par défaut (voir .env.example). */
 export const API = import.meta.env.VITE_API_URL ?? "/api";
-/** `true` = fausse API dans le navigateur (src/services/mock.ts), pour développer sans backend. */
-export const MOCK = import.meta.env.VITE_USE_MOCK === "true";
 
 const NETWORK = "Impossible de joindre le serveur. Vérifie ta connexion Internet.";
 const GENERIC = "Une erreur est survenue. Réessaie dans un instant.";

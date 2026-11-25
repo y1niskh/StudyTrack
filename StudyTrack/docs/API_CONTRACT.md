@@ -11,7 +11,7 @@ Le code de référence est dans le frontend :
 | Toutes les routes appelées par les écrans | `frontend/src/services/api.ts` et `frontend/src/services/auth.ts` |
 | Gestion des requêtes, du jeton et des erreurs | `frontend/src/services/http.ts` |
 | Formes JSON (TypeScript) | `frontend/src/types.ts` |
-| **Règles métier de référence** (cycles, verrouillage, cours qui se répètent) | `frontend/src/services/mock.ts` (faux serveur, lisible comme une spécification exécutable) |
+| **Règles métier de référence** (cycles, verrouillage, cours qui se répètent) | `backend/src/modules/lessons/service.ts` et `backend/src/modules/cycles/service.ts`, couvertes par les tests du backend |
 | Ce que le frontend calcule lui-même | `frontend/src/lib/cycles.ts`, `frontend/src/lib/slots.ts` |
 
 ---
@@ -124,7 +124,7 @@ Supprime **toutes** les données de l'utilisateur (élèves, enseignants, matiè
 
 ## 4. Règles des cycles (le cœur du métier)
 
-Reprises du cahier des charges, avec les décisions prises pour ce qu'il laissait ouvert. Implémentation de référence : `attach`, `detach` et `markPaid` dans `frontend/src/services/mock.ts`.
+Reprises du cahier des charges, avec les décisions prises pour ce qu'il laissait ouvert. Implémentation : `cycleFor`, `markPaid` et `markUnpaid` dans `backend/src/modules/cycles/service.ts`, et `backend/src/modules/lessons/service.ts`.
 
 1. **Seules les séances `completed` comptent.** Une séance `planned` ou `cancelled` n'est dans aucun cycle.
 2. **Entrer dans un cycle** (séance qui devient `completed`) : elle rejoint le **premier cycle `unpaid` de l'inscription qui n'est pas plein** (par numéro croissant). Il n'y en a pas : un nouveau cycle est créé (`number` = plus grand numéro existant + 1, `amount` = `Enrollment.price`).
@@ -171,10 +171,9 @@ Le frontend ne les appelle pas aujourd'hui ; les prochaines pages les utiliseron
 
 **Gardé seulement dans le navigateur** (rien à faire côté serveur) : la taille du texte choisie dans *Paramètres* (`localStorage`, `frontend/src/lib/prefs.ts`) et le fichier de sauvegarde JSON, construit par le frontend à partir des quatre `GET` de lecture (`frontend/src/lib/backup.ts`).
 
-## 8. Brancher le frontend sur le vrai backend
+## 8. Lancer le frontend avec le backend
 
-1. Lancer le backend sur le port **5000** (ou changer le proxy dans `frontend/vite.config.ts`).
-2. Dans `frontend/.env.development`, mettre `VITE_USE_MOCK=false` (et `VITE_API_URL=/api`).
-3. `cd frontend`, `npm install`, `npm run dev`.
+1. Lancer le backend sur le port **5000** (`cd backend`, `npm run dev`).
+2. `cd frontend`, `npm install`, `npm run dev` : le proxy de Vite envoie `/api` vers le backend.
+3. En production, un seul serveur sert le site et l'API (voir `README.md`).
 4. Parcours de recette : créer un compte → se connecter → ajouter un cours « Maths, M. Arris, chaque samedi 12:00 » (page *Cours*) → confirmer des séances « à confirmer » jusqu'à remplir un cycle → l'accueil affiche « À payer cette semaine » → « Marquer comme payé » → page *Paiements* : le paiement est dans l'historique → « Corriger ce paiement » le remet à payer → page *Paramètres* : changer « tous les … cours » ou le prix d'un cours suivi ; « Nouvelle année » vide les données.
-5. Quand tout marche : supprimer `frontend/src/services/mock.ts`, puis retirer dans `api.ts` les lignes `if (MOCK) …` (et la ligne `const mock = …`) et dans `auth.ts` la branche `MOCK`.

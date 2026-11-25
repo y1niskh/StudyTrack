@@ -5,23 +5,35 @@ effectuées, cycles de paiement en espèces. Spécification : `StudyTrack_Specif
 
 ```text
 StudyTrack/
-├─ frontend/   React + TypeScript + Vite   → terminé page par page (voir frontend/README.md)
-├─ backend/    Node.js + Express + MongoDB → à faire ; vide pour l'instant
-└─ docs/
-   └─ API_CONTRACT.md   ← À LIRE EN PREMIER pour le backend : routes, formats JSON, règles des cycles, tests
+├─ frontend/   React + TypeScript + Vite            (voir frontend/README.md)
+├─ backend/    Node.js + Express + Supabase Postgres (règles des cycles, connexion, tests)
+├─ docs/       API_CONTRACT.md (routes, formats, règles), PRD, TRD, PLAN
+└─ package.json  npm run build / npm start : un seul serveur pour le site et l'API (hébergé sur Render)
 ```
 
-## Pour la personne qui développe le backend
+## Travailler en local (Windows PowerShell)
 
-1. Lire `docs/API_CONTRACT.md` (15 minutes) : il dit exactement ce que le frontend envoie et attend.
-2. Les règles métier (cycles, verrouillage des cycles payés, cours qui se répètent) sont écrites en code lisible dans
-   `frontend/src/services/mock.ts` : c'est le « faux serveur » du frontend, à reproduire côté Express et à couvrir de tests.
-3. Brancher le frontend sur votre API en changeant une seule variable (`VITE_USE_MOCK=false`) : voir la section 8 du contrat.
+1. Backend : `cd StudyTrack\backend`, copier `.env.example` en `.env` et le remplir (base Supabase, secret, e-mails
+   autorisés), puis :
 
-## Lancer le frontend (Windows PowerShell)
+   ```powershell
+   npm install
+   npm run db:migrate   # crée ou met à jour les tables
+   npm test             # tous les tests (base en mémoire, sans Internet)
+   npm run dev          # API sur http://localhost:5000/api
+   ```
 
-```powershell
-cd StudyTrack\frontend
-npm install
-npm run dev        # http://localhost:5173  (données de démonstration, sans backend)
-```
+2. Frontend, dans un deuxième terminal :
+
+   ```powershell
+   cd StudyTrack\frontend
+   npm install
+   npm run dev          # http://localhost:5173 (le proxy envoie /api au backend)
+   ```
+
+## Mise en ligne
+
+Render, un seul service web : Root Directory `StudyTrack`, Build `npm run build`, Start `npm start`, Health Check
+`/api/health`. Variables d'environnement : `NODE_ENV=production`, `DATABASE_URL`, `DATABASE_CA_CERT`, `JWT_SECRET`,
+`ALLOWED_EMAILS` (voir `backend/.env.example`). Toute nouvelle migration : `npm run db:migrate` **avant** de déployer le
+code qui en a besoin.
