@@ -4,6 +4,27 @@ Newest note on top.
 
 ---
 
+## 2026-11-25 · Session 2 (Phase 3 done, project launched)
+
+**Done**
+- 3.5: live on Render (branch `phase-3` until switched to `master`). Root build fixed for `NODE_ENV=production`
+  (`npm ci --include=dev` for the frontend).
+- 3.6: `mock.ts` and every `MOCK` branch removed; `.env` files, READMEs, API contract and PRD updated.
+  Frontend builds; 78 backend tests pass; lint and typecheck clean.
+- Phase 3 merged into `master` and pushed. All phases of the plan are done.
+
+**Next (outside the plan)**
+- Render: switch the service's Branch from `phase-3` to `master`.
+- Run the online checks (11 wrong passwords → 429; cookie HttpOnly/Secure/SameSite) if not done yet.
+- cron-job.org: call `/api/health` every 2 days (Supabase pauses after a week).
+- Later features only if the frontend needs them: contract §7.
+
+**Watch out**
+- Any schema change = a new migration, `npm run db:migrate` on Supabase BEFORE deploying the code.
+- The user's own test account is still in Supabase.
+
+---
+
 ## 2026-11-25 · Session 2 (tasks 3.3 and 3.4)
 
 **Done**
