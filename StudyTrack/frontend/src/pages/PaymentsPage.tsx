@@ -4,6 +4,7 @@ import Header from "../components/Header";
 import PayCard from "../components/PayCard";
 import { paymentsOverview, studentColor } from "../lib/cycles";
 import { monthKey, timeOf } from "../lib/lessons";
+import { scrollToId } from "../lib/slots";
 import { fetchDashboard, markPaid, markUnpaid } from "../services/api";
 import { ApiError } from "../services/auth";
 import type { DashboardData } from "../types";
@@ -67,6 +68,13 @@ export default function PaymentsPage() {
                 </div>
               ))}
             </section>
+
+            {/* Téléphone : aller directement à une partie de la page */}
+            <div className="jumpbar m-only" role="group" aria-label="Aller à">
+              <button type="button" className="chip" onClick={() => scrollToId("h-due")}>À payer <b className="jb-n">{o.due.length}</b></button>
+              <button type="button" className="chip" onClick={() => scrollToId("h-going")}>Bientôt</button>
+              <button type="button" className="chip" onClick={() => scrollToId("h-hist")}>Historique</button>
+            </div>
 
             <div className="pgrid">
               <section className="sheet due" aria-labelledby="h-due">

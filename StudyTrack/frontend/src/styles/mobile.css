@@ -1,0 +1,119 @@
+/* ===== Vue téléphone (moins de 760 px) =====
+   Mêmes pages, mêmes données, même décor (porte de frigo, post-its, aimants) : seule la mise en page change.
+   Tout est dans des media queries ; à partir de 760 px (tablette, ordinateur) rien ne change.
+   `.m-only` : élément affiché seulement sur téléphone. La barre du bas est dans components/Header.css. */
+@media (min-width: 760px) { .m-only { display: none !important; } }
+
+@media (max-width: 759px) {
+  /* Place pour la barre du bas et les bords arrondis / encoches des téléphones */
+  .fridge--board {
+    --seam-top: 7.4rem;
+    padding: max(.9rem, env(safe-area-inset-top)) max(.85rem, env(safe-area-inset-right)) calc(6.5rem + env(safe-area-inset-bottom)) max(.85rem, env(safe-area-inset-left));
+  }
+  .board { grid-template-columns: minmax(0, 1fr); gap: 1.1rem; font-size: 1.2rem; }
+  .board h2 { font-size: 2.3rem; }
+  .board .sheet { margin-top: .7rem; padding: 2rem 1rem 1rem; }
+  .board .stu { font-size: 1.95rem; }
+  .row { flex-wrap: wrap; }
+  .amount { font-size: 1.6rem; padding: .15rem .65rem; }
+  [id^="day-"], #h-add, #h-due, #h-going, #h-hist { scroll-margin-top: 1rem; }
+
+  /* Post-its de résumé : 2 × 2, plus compacts */
+  .stats { gap: 1.1rem .75rem; padding-top: .6rem; }
+  .stat { padding: 1.3rem .4rem .75rem; }
+  .num { font-size: 2.6rem; }
+  .num.money { font-size: clamp(1.35rem, 6.2vw, 2rem); padding: .45rem 0 .3rem; white-space: nowrap; }
+  .lab { font-size: 1.05rem; }
+
+  /* Fiches à marge rouge : marge plus étroite pour garder la largeur */
+  .lined, .fiche { padding-right: .9rem; padding-left: 2.3rem; }
+  .lined {
+    background-image:
+      linear-gradient(90deg, transparent 1.5rem, #e5566b 1.5rem calc(1.5rem + 2px), transparent calc(1.5rem + 2px)),
+      repeating-linear-gradient(transparent 0 31px, #c3cff0 31px 32px);
+  }
+  .fiche { background-image: linear-gradient(90deg, transparent 1.5rem, #e5566b 1.5rem calc(1.5rem + 2px), transparent calc(1.5rem + 2px)); }
+  .lined .gom, .fiche .gom { left: -1.95rem; width: 13px; height: 13px; }
+  .lesson { height: auto; min-height: 64px; }
+  .lesson .l2 { height: auto; padding-bottom: .2rem; }
+
+  /* Bouton-lien (« Voir les paiements → ») */
+  .golink { display: flex; align-items: center; justify-content: center; gap: .5rem; width: 100%; margin-top: .8rem; text-decoration: none; }
+  .ghost.golink { min-height: 48px; margin-bottom: .6rem; line-height: 1.2; }
+  .primary.golink { min-height: 52px; }
+
+  /* Accueil : « Aujourd'hui » */
+  .sheet.today { --p: #9fd8ff; transform: rotate(-.3deg); }
+  .mcard { display: flex; align-items: flex-start; gap: .7rem; margin-top: .5rem; padding: .6rem .7rem; border-left: 6px solid var(--c); border-radius: 10px; background: rgba(255,255,255,.72); }
+  .mcard .time { min-width: 3.3rem; font: 700 1.8rem/1.1 var(--font-display); color: var(--ink); }
+  .mc-body { display: flex; flex: 1; flex-direction: column; min-width: 0; }
+  .mcard .stu { font-size: 1.9rem; line-height: 1.05; }
+  .mcard .l2 { font-size: 1.15rem; }
+  .mcard .stamp { align-self: center; font-size: 1.2rem; }
+  .alertlink {
+    display: flex; align-items: center; gap: .55rem; min-height: 48px; margin-top: .8rem; padding: .6rem .8rem; text-decoration: none;
+    color: #8f1d17; background: rgba(255,255,255,.6); border: 2px dashed #b3261e; border-radius: 10px;
+  }
+  .alertlink span { flex: 1; }
+
+  /* Cours : semaine, jours, cours en cartes */
+  .weeknav { flex-wrap: nowrap; align-items: center; }
+  .weeknav .wprev, .weeknav .wnext { flex: none; width: 52px; min-height: 48px; padding: 0; font-size: 1.7rem; line-height: 1; }
+  .weeknav .wnow { flex: 1; min-height: 48px; padding: 0 .5rem; }
+  .weeknav .wnext { margin-left: auto; }
+  .wn-t { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .daystrip { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; margin: 0 0 .7rem; }
+  .dsd {
+    display: flex; flex-direction: column; align-items: center; min-width: 0; min-height: 60px; padding: .3rem 0 .25rem; cursor: pointer;
+    font: min(.9rem, 3.6vw)/1.1 var(--font-body); color: var(--ink); background: rgba(255,255,255,.85);
+    border: 2px solid rgba(29,45,122,.2); border-radius: 10px; -webkit-tap-highlight-color: transparent;
+  }
+  .dsd-w { max-width: 100%; overflow: hidden; text-transform: capitalize; }
+  .dsd-n { font: 700 min(1.55rem, 6.4vw)/1 var(--font-display); }
+  .dsd-dot { width: 7px; height: 7px; margin-top: 3px; border-radius: 50%; }
+  .dsd.has .dsd-dot { background: #d62f4b; }
+  .dsd.today { color: #fff; background: var(--ink); border-color: var(--ink); }
+  .dsd.today.has .dsd-dot { background: #ffe36e; }
+  .addjump { margin: 0 0 .3rem; }
+  h3.day { margin: .9rem 0 .3rem; font-size: 1.65rem; }
+  .dayblock.noday { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 .6rem; }
+  .noday h3.day { margin: .55rem 0 0; font-size: 1.35rem; border-bottom: 0; opacity: .8; }
+  .noday .nolesson { margin: 0 !important; font-size: 1.05rem; }
+  .fiche .lrow {
+    margin: .5rem 0; padding: .65rem .75rem .75rem; border: 0; border-left: 6px solid var(--c); border-radius: 10px;
+    background: #fff; box-shadow: 0 2px 5px rgba(0,0,0,.14);
+  }
+  .fiche .lrow .gom { display: none; }
+  .lrow .l1 { gap: .2rem .6rem; }
+  .lrow .time { font-size: 1.8rem; }
+  .lrow .stu { font-size: 1.85rem; }
+  .stamp { font-size: 1.25rem; }
+  .lrow .lf { padding: .55rem; }
+  .lrow .ghost.small { width: 100%; }
+
+  /* Formulaires : boutons pleine largeur, rien ne déborde (même les champs date/heure en très grand texte) */
+  .lf { grid-template-columns: minmax(0, 1fr); }
+  .lf-two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .lf > *, .lf-field, .lf-field input, .lf-field select { min-width: 0; max-width: 100%; }
+  .lf-actions .primary { flex: 1 1 100%; min-width: 0; }
+  .lf-actions .ghost { flex: 1; }
+  .board .sheet .primary { min-width: 0; width: 100%; }
+  .yesno .primary, .yesno .ghost { width: 100%; }
+
+  /* Paiements : aller à une partie */
+  .jumpbar { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: -.2rem; }
+  .jumpbar .chip { flex: 1 1 auto; justify-content: center; min-height: 46px; padding: 0 .7rem; white-space: nowrap; }
+  .jb-n { min-width: 1.6rem; padding: 0 .45rem; border-radius: 999px; font: 1rem/1.6 var(--font-body); text-align: center; color: #fff; background: #b3261e; }
+  .prow .stu { font-size: 1.9rem; }
+  .amount.paidamt { font-size: 1.45rem; }
+
+  /* Réglages */
+  .m-logout { width: 100%; margin-top: 1rem; min-height: 48px; }
+  .dl { grid-template-columns: 1fr; gap: 0; }
+  .dl dd { margin-bottom: .4rem; }
+}
+
+/* Très petits écrans : date et heure l'une sous l'autre */
+@media (max-width: 419px) {
+  .lf-two { grid-template-columns: 1fr; }
+}

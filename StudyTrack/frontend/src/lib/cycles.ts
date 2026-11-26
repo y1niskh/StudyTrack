@@ -28,17 +28,21 @@ export function summarize(data: DashboardData, now = new Date()) {
   const dueThisWeek = due.filter((o) => within(o.doneAt, week.start, week.end));
   const overdue = due.filter((o) => o.doneAt && new Date(o.doneAt) < week.start);
 
-  const tomorrowLessons = [...data.lessons, ...occurrences(data.slots, data.lessons, tomorrow, addDays(tomorrow, 1))]
-    .filter((l) => l.status === "planned" && byId.has(l.enrollmentId) && within(l.date, tomorrow, addDays(tomorrow, 1)))
+  /* Cours d'un jour (enregistrés + cours qui se répètent), dans l'ordre de l'heure */
+  const lessonsOn = (day: Date, keep: (l: Lesson) => boolean) => [...data.lessons, ...occurrences(data.slots, data.lessons, day, addDays(day, 1))]
+    .filter((l) => keep(l) && byId.has(l.enrollmentId) && within(l.date, day, addDays(day, 1)))
     .sort((a, b) => a.date.localeCompare(b.date))
     .map((lesson) => ({ lesson, enrollment: byId.get(lesson.enrollmentId)! }));
+  const tomorrowLessons = lessonsOn(tomorrow, (l) => l.status === "planned");
+  /* Aujourd'hui (vue téléphone) : tous les cours du jour sauf les annulés */
+  const todayLessons = lessonsOn(startOfDay(now), (l) => l.status !== "cancelled");
 
   const paidThisWeek = data.cycles
     .filter((c) => c.status === "paid" && byId.has(c.enrollmentId) && within(c.paidAt, week.start, week.end))
     .sort((a, b) => (b.paidAt ?? "").localeCompare(a.paidAt ?? ""))
     .map((cycle) => { const enrollment = byId.get(cycle.enrollmentId)!; return { cycle, enrollment, amount: amountOf(cycle, enrollment) }; });
 
-  return { week, tomorrow, tomorrowLessons, dueThisWeek, overdue, paidThisWeek, totalDue: dueThisWeek.reduce((t, o) => t + o.amount, 0) };
+  return { week, today: startOfDay(now), todayLessons, tomorrow, tomorrowLessons, dueThisWeek, overdue, paidThisWeek, totalDue: dueThisWeek.reduce((t, o) => t + o.amount, 0) };
 }
 
 /** Une couleur fixe par élève, la même partout, pour s'y retrouver d'un coup d'œil. */

@@ -5,6 +5,7 @@ import App from "./App";
 import "./index.css";
 import "./styles/fridge.css";
 import "./styles/board.css";
+import "./styles/mobile.css";
 import { applyTextScale, getTextScale } from "./lib/prefs";
 
 applyTextScale(getTextScale());

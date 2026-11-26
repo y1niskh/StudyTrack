@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useId, useState, type CSSProperties, type FormEvent } from "react";
+import { useNavigate } from "react-router-dom";
 import FridgeFrame from "../components/FridgeFrame";
 import Header from "../components/Header";
 import NewYearReset from "../components/NewYearReset";
@@ -7,7 +8,7 @@ import { downloadBackup } from "../lib/backup";
 import { getTextScale, setTextScale, TEXT_SCALES } from "../lib/prefs";
 import { WEEKDAYS } from "../lib/slots";
 import { fetchDashboard, updateEnrollment } from "../services/api";
-import { ApiError, getSession } from "../services/auth";
+import { ApiError, getSession, signOut } from "../services/auth";
 import type { DashboardData, Enrollment } from "../types";
 import "../components/LessonForm.css";
 import "./SettingsPage.css";
@@ -52,6 +53,7 @@ export default function SettingsPage() {
   const [editId, setEditId] = useState<string | null>(null);
   const [scale, setScale] = useState(getTextScale);
   const user = getSession()?.user;
+  const navigate = useNavigate();
 
   const load = useCallback(async () => {
     try { const d = await fetchDashboard(); setData(d); setError(""); }
@@ -104,6 +106,8 @@ export default function SettingsPage() {
                   <dt>Nom</dt><dd>{user?.name}</dd>
                   <dt>E-mail</dt><dd>{user?.email}</dd>
                 </dl>
+                {/* Téléphone : la déconnexion est aussi ici, avec son nom écrit en entier */}
+                <button className="ghost m-only m-logout" onClick={async () => { await signOut(); navigate("/connexion"); }}>Se déconnecter</button>
               </section>
             </div>
 

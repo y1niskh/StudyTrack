@@ -5,7 +5,7 @@ import LessonForm, { type LessonValues } from "../components/LessonForm";
 import SlotForm from "../components/SlotForm";
 import { addDays, studentColor, weekRange } from "../lib/cycles";
 import { dayKey, STATUS_LABEL, timeOf, toISO } from "../lib/lessons";
-import { isVirtual, occurrences, WEEKDAYS } from "../lib/slots";
+import { isVirtual, lessonsToConfirm, occurrences, scrollToId, WEEKDAYS } from "../lib/slots";
 import { createLesson, createSlot, deleteLesson, deleteSlot, fetchDashboard, updateLesson } from "../services/api";
 import { ApiError } from "../services/auth";
 import type { DashboardData, Lesson, LessonStatus } from "../types";
@@ -60,10 +60,7 @@ export default function LessonsPage() {
   })();
 
   /* À confirmer : cours prévus dont l'heure est passée et qu'on n'a pas encore marqués « fait » ou « annulé » */
-  const since = slots.map((s) => new Date(`${s.since}T00:00`)).sort((a, b) => +a - +b)[0] ?? now;
-  const toConfirm = data
-    ? [...data.lessons, ...occurrences(slots, data.lessons, since, now)].filter((l) => l.status === "planned" && new Date(l.date) < now && byId.has(l.enrollmentId)).sort((a, b) => a.date.localeCompare(b.date))
-    : [];
+  const toConfirm = data ? lessonsToConfirm(data, now) : [];
 
   const toValues = (l: Lesson): LessonValues => ({ enrollmentId: l.enrollmentId, date: dayKey(l.date), time: timeOf(l.date), status: l.status, notes: l.notes ?? "" });
   const body = (v: LessonValues) => ({ date: toISO(v.date, v.time), status: v.status as LessonStatus, notes: v.notes.trim() || undefined });
@@ -202,10 +199,27 @@ export default function LessonsPage() {
               <h2 id="h-week">{offset === 0 ? "Cette semaine" : offset === 1 ? "La semaine prochaine" : offset === -1 ? "La semaine passée" : "Une autre semaine"}</h2>
               <p className="sub">{weekLabel}</p>
               <div className="weeknav">
-                <button className="ghost" onClick={() => setOffset(offset - 1)}>‹ Semaine précédente</button>
-                {offset !== 0 && <button className="ghost" onClick={() => setOffset(0)}>Cette semaine</button>}
-                <button className="ghost" onClick={() => setOffset(offset + 1)}>Semaine suivante ›</button>
+                <button className="ghost wprev" aria-label="Semaine précédente" onClick={() => setOffset(offset - 1)}>‹<span className="wn-t"> Semaine précédente</span></button>
+                {offset !== 0 && <button className="ghost wnow" onClick={() => setOffset(0)}>Cette semaine</button>}
+                <button className="ghost wnext" aria-label="Semaine suivante" onClick={() => setOffset(offset + 1)}><span className="wn-t">Semaine suivante </span>›</button>
               </div>
+              {/* Téléphone : les 7 jours d'un coup d'œil ; un appui fait défiler jusqu'au jour */}
+              {(slots.length > 0 || inWeek.length > 0) && (
+                <div className="daystrip m-only" role="group" aria-label="Aller au jour">
+                  {days.map((d) => {
+                    const k = dayKey(d); const n = inWeek.filter((l) => dayKey(l.date) === k).length;
+                    return (
+                      <button key={k} type="button" className={`dsd${k === dayKey(now) ? " today" : ""}${n ? " has" : ""}`} onClick={() => scrollToId(`day-${k}`)}
+                        aria-label={`${fmt(d, { weekday: "long", day: "numeric", month: "long" })} : ${n === 0 ? "pas de cours" : `${n} cours`}`}>
+                        <span className="dsd-w">{fmt(d, { weekday: "short" }).replace(".", "")}</span>
+                        <span className="dsd-n">{d.getDate()}</span>
+                        <i className="dsd-dot" aria-hidden="true" />
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+              {slots.length > 0 && <button type="button" className="primary addjump m-only" onClick={() => scrollToId("h-add")}>+ Ajouter un cours</button>}
               {students.length > 1 && (
                 <fieldset className="chips">
                   <legend>Élève</legend>
@@ -223,7 +237,7 @@ export default function LessonsPage() {
                 const k = dayKey(d); const list = inWeek.filter((l) => dayKey(l.date) === k);
                 const tag = k === dayKey(now) ? "Aujourd'hui" : k === dayKey(addDays(now, 1)) ? "Demain" : "";
                 return (
-                  <section key={k} className="dayblock" aria-label={fmt(d, { dateStyle: "long" })}>
+                  <section key={k} id={`day-${k}`} className={`dayblock${list.length === 0 ? " noday" : ""}`} aria-label={fmt(d, { dateStyle: "long" })}>
                     <h3 className="day">{fmt(d, { weekday: "long", day: "numeric", month: "long" })}{tag && <span className="tag">{tag}</span>}</h3>
                     {list.length === 0 ? <p className="nolesson">Pas de cours</p> : <ul>{list.map(row)}</ul>}
                   </section>

@@ -1,4 +1,4 @@
-import type { Lesson, Slot } from "../types";
+import type { DashboardData, Lesson, Slot } from "../types";
 import { dayKey } from "./lessons";
 
 export const WEEKDAYS = ["dimanche", "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi"];
@@ -18,4 +18,18 @@ export function occurrences(slots: Slot[], lessons: Lesson[], from: Date, to: Da
     }
   }
   return out;
+}
+
+/** Cours à confirmer : prévus, dont l'heure est passée, pas encore marqués « fait » ou « annulé » (du plus ancien au plus récent). */
+export function lessonsToConfirm(data: DashboardData, now: Date): Lesson[] {
+  const known = new Set(data.enrollments.map((e) => e.id));
+  const since = data.slots.map((s) => new Date(`${s.since}T00:00`)).sort((a, b) => +a - +b)[0] ?? now;
+  return [...data.lessons, ...occurrences(data.slots, data.lessons, since, now)]
+    .filter((l) => l.status === "planned" && new Date(l.date) < now && known.has(l.enrollmentId))
+    .sort((a, b) => a.date.localeCompare(b.date));
+}
+
+/** Amène directement une section en haut de l'écran (saut immédiat : rien ne bouge pendant qu'on lit). */
+export function scrollToId(id: string) {
+  document.getElementById(id)?.scrollIntoView({ block: "start" });
 }

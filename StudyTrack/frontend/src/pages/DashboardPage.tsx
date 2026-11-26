@@ -1,8 +1,11 @@
 import { useCallback, useEffect, useState, type CSSProperties } from "react";
+import { Link } from "react-router-dom";
 import Header from "../components/Header";
 import PayCard from "../components/PayCard";
 import FridgeFrame from "../components/FridgeFrame";
 import { addDays, studentColor, summarize } from "../lib/cycles";
+import { STATUS_LABEL, timeOf } from "../lib/lessons";
+import { lessonsToConfirm } from "../lib/slots";
 import { fetchDashboard, markPaid } from "../services/api";
 import { ApiError } from "../services/auth";
 import type { DashboardData, Enrollment } from "../types";
@@ -14,6 +17,7 @@ const money = (n: number) => `${n.toLocaleString("fr-FR")} DA`;
 const PATHS = {
   check: "M5 13l4 4L19 7",
   alert: "M12 4 2 20h20zM12 10v4M12 17.5v.5",
+  arrow: "M5 12h14M13 6l6 6-6 6",
 };
 const Ico = ({ n }: { n: keyof typeof PATHS }) => <svg className="ico" viewBox="0 0 24 24" aria-hidden="true"><path d={PATHS[n]} /></svg>;
 
@@ -22,6 +26,7 @@ export default function DashboardPage() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [now] = useState(() => new Date());
 
   const load = useCallback(async () => {
     try { const d = await fetchDashboard(); setData(d); setError(""); }
@@ -38,6 +43,7 @@ export default function DashboardPage() {
 
   const pay = (id: string) => run(() => markPaid(id), "Le paiement n'a pas pu être enregistré.", () => undefined);
   const s = data ? summarize(data) : null;
+  const toConfirm = data ? lessonsToConfirm(data, now).length : 0;
   const color = studentColor(data?.enrollments ?? []);
   const who = (e: Enrollment) => ({ "--c": color(e.studentName) }) as CSSProperties;
 
@@ -79,6 +85,29 @@ export default function DashboardPage() {
               ))}
             </section>
 
+            {/* Téléphone seulement : l'essentiel de la journée, en premier */}
+            <section className="sheet today m-only" aria-labelledby="h-today">
+              <i className="magnet" style={{ "--m": "#d62f4b" } as CSSProperties} aria-hidden="true" />
+              <h2 id="h-today">Aujourd'hui</h2>
+              <p className="sub">{fmt(s.today, { weekday: "long", day: "numeric", month: "long" })}</p>
+              {s.todayLessons.length === 0 ? <p className="empty">Pas de cours aujourd'hui.</p> : (
+                <ul>
+                  {s.todayLessons.map(({ lesson, enrollment: e }) => (
+                    <li key={lesson.id} className="mcard" style={who(e)}>
+                      <span className="time">{timeOf(lesson.date)}</span>
+                      <span className="mc-body"><strong className="stu">{e.studentName}</strong><span className="l2">{e.subjectName} avec {e.teacherName}</span></span>
+                      {lesson.status === "completed" && <span className="stamp completed">{STATUS_LABEL.completed}</span>}
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {toConfirm > 0 && (
+                <Link className="alertlink" to="/cours">
+                  <Ico n="alert" /> <span>{toConfirm} cours à confirmer : ont-ils eu lieu ?</span> <Ico n="arrow" />
+                </Link>
+              )}
+            </section>
+
             <div className="cols" data-span={span}>
               <section className="lined" aria-labelledby="h-next">
                 <i className="magnet big" aria-hidden="true" />
@@ -94,6 +123,7 @@ export default function DashboardPage() {
                     </li>
                   ))}
                 </ul>
+                <Link className="ghost golink m-only" to="/cours">Voir toute la semaine <Ico n="arrow" /></Link>
               </section>
 
                 <section className="sheet pay" aria-labelledby="h-pay">
@@ -108,6 +138,7 @@ export default function DashboardPage() {
                       <ul>{s.overdue.map((o) => <PayCard key={o.cycle.id} cycle={o.cycle} enrollment={o.enrollment} amount={o.amount} color={color(o.enrollment.studentName)} busy={busy} onPay={pay} />)}</ul>
                     </details>
                   )}
+                  <Link className="primary golink m-only" to="/paiements">Voir les paiements <Ico n="arrow" /></Link>
                 </section>
 
                 <section className="sheet paid" aria-labelledby="h-paid">
