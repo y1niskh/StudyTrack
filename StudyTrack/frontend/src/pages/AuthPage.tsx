@@ -2,8 +2,8 @@ import { useState, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { authenticate, ApiError } from "../services/auth";
 import { validateAuth, MIN_PASSWORD, type AuthErrors, type AuthFields } from "../lib/validation";
-import FridgeDecor from "./FridgeDecor";
-import Brand from "../components/Brand";
+import Logo from "../components/Logo";
+import { Notice } from "../components/ui";
 import "./AuthPage.css";
 
 const EMPTY: AuthFields = { name: "", email: "", password: "", confirm: "" };
@@ -42,7 +42,7 @@ export default function AuthPage({ mode }: { mode: "login" | "register" }) {
     <div className="field">
       <label htmlFor={id}>{label}</label>
       <input
-        id={id} value={values[id]} onChange={set(id)} aria-invalid={!!errors[id]}
+        id={id} className="input" value={values[id]} onChange={set(id)} aria-invalid={!!errors[id]}
         aria-describedby={errors[id] ? `${id}-err` : undefined} {...props}
       />
       {errors[id] && <p className="field-error" id={`${id}-err`}>{errors[id]}</p>}
@@ -52,47 +52,46 @@ export default function AuthPage({ mode }: { mode: "login" | "register" }) {
   const pwdType = showPwd ? "text" : "password";
 
   return (
-    <main className="fridge fridge--center">
-      <FridgeDecor />
+    <main className="auth-page">
       <div className="auth">
-      <Brand />
-      <p className="tagline">Le suivi des cours particuliers, séance après séance.</p>
+        <div className="auth-brand">
+          <Logo large />
+          <p className="tagline">Le suivi des cours particuliers et des paiements, simplement.</p>
+        </div>
 
-      <form className="sheet" onSubmit={onSubmit} noValidate>
-        <i className="magnet big" aria-hidden="true" />
-        <h2>{isRegister ? "Créer un compte" : "Connexion"}</h2>
+        <form className="card auth-card form" onSubmit={onSubmit} noValidate>
+          <h1>{isRegister ? "Créer un compte" : "Se connecter"}</h1>
 
-        {formError && <p className="form-error" role="alert">{formError}</p>}
+          {formError && <Notice kind="error">{formError}</Notice>}
 
-        {isRegister && field("name", "Nom", { type: "text", autoComplete: "name" })}
-        {field("email", "Adresse e-mail", { type: "email", autoComplete: "email", inputMode: "email" })}
-        {field("password", "Mot de passe", {
-          type: pwdType, autoComplete: isRegister ? "new-password" : "current-password",
-        })}
-        {isRegister && (
-          <>
-            <p className="hint">{MIN_PASSWORD} caractères minimum.</p>
-            {field("confirm", "Confirmer le mot de passe", { type: pwdType, autoComplete: "new-password" })}
-          </>
-        )}
+          {isRegister && field("name", "Nom", { type: "text", autoComplete: "name" })}
+          {field("email", "Adresse e-mail", { type: "email", autoComplete: "email", inputMode: "email" })}
+          {field("password", "Mot de passe", {
+            type: pwdType, autoComplete: isRegister ? "new-password" : "current-password",
+          })}
+          {isRegister && (
+            <>
+              <p className="hint">{MIN_PASSWORD} caractères minimum.</p>
+              {field("confirm", "Confirmer le mot de passe", { type: pwdType, autoComplete: "new-password" })}
+            </>
+          )}
 
-        <label className="check">
-          <input type="checkbox" checked={showPwd} onChange={(e) => setShowPwd(e.target.checked)} />
-          Afficher le mot de passe
-        </label>
+          <label className="check">
+            <input type="checkbox" checked={showPwd} onChange={(e) => setShowPwd(e.target.checked)} />
+            Afficher le mot de passe
+          </label>
 
-        <button className="primary" type="submit" disabled={loading}>
-          {loading ? "Un instant…" : isRegister ? "Créer mon compte" : "Se connecter"}
-        </button>
+          <button className="btn btn-primary btn-block" type="submit" disabled={loading}>
+            {loading ? "Un instant…" : isRegister ? "Créer mon compte" : "Se connecter"}
+          </button>
 
-        <p className="switch">
-          {isRegister ? "Tu as déjà un compte ?" : "Pas encore de compte ?"}{" "}
-          <Link to={isRegister ? "/connexion" : "/inscription"}>
-            {isRegister ? "Se connecter" : "Créer un compte"}
-          </Link>
-        </p>
-      </form>
-
+          <p className="switch">
+            {isRegister ? "Tu as déjà un compte ?" : "Pas encore de compte ?"}{" "}
+            <Link to={isRegister ? "/connexion" : "/inscription"}>
+              {isRegister ? "Se connecter" : "Créer un compte"}
+            </Link>
+          </p>
+        </form>
       </div>
     </main>
   );

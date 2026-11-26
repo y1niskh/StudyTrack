@@ -1,36 +1,4 @@
-
-
-
-.cols { display: grid; gap: 1.5rem; align-items: stretch; }
-.sheet.pay { --p: #fff27a; transform: rotate(-.4deg); }
-.sheet.paid { --p: #c9f0b0; transform: rotate(.4deg); }
-
-
-/* Fiche à lignes Seyès avec marge rouge (cours de demain) */
-.lined {
-  position: relative; margin-top: .9rem; padding: 0 1.25rem .5rem 3.4rem; border-radius: 4px; background-color: #fffdf6;
-  background-image:
-    linear-gradient(90deg, transparent 2.5rem, #e5566b 2.5rem calc(2.5rem + 2px), transparent calc(2.5rem + 2px)),
-    repeating-linear-gradient(transparent 0 31px, #c3cff0 31px 32px);
-  box-shadow: 0 14px 12px -9px rgba(0,0,0,.5), 0 3px 5px rgba(0,0,0,.2); transform: rotate(.5deg); line-height: 32px;
-}
-.lined h2 { height: 64px; line-height: 64px; }
-.lined .sub, .lined .empty { height: 32px; line-height: 32px; margin: 0 !important; padding: 0; }
-.lesson { position: relative; height: 64px; }
-.l1 { display: flex; align-items: baseline; gap: .7rem; height: 32px; }
-.time { font: 700 2rem/32px var(--font-display); color: var(--ink); }
-.lesson .stu { font-size: 2rem; line-height: 32px; }
-.lesson .l2 { height: 32px; line-height: 32px; }
-
-
-.late { margin-top: .6rem; padding: .6rem .75rem; border: 2px dashed #b3261e; border-radius: 10px; background: rgba(255,255,255,.4); }
-.late summary { cursor: pointer; color: #8f1d17; }
-.late[open] summary { margin-bottom: .5rem; }
-
-@media (min-width: 760px) {
-  .cols { grid-template-columns: 1fr 1fr; }
-  .lined { grid-area: lined; } .sheet.pay { grid-area: pay; } .sheet.paid { grid-area: paid; }
-  .cols[data-span="lined"] { grid-template-areas: "lined pay" "lined paid"; }
-  .cols[data-span="pay"] { grid-template-areas: "lined pay" "paid pay"; }
-  .cols[data-span="paid"] { grid-template-areas: "lined paid" "pay paid"; }
-}
+.attention { display: grid; gap: .75rem; }
+.stack { display: grid; gap: 1.5rem; min-width: 0; }
+.next-progress { display: grid; gap: .25rem; width: 7.5rem; font-size: .9375rem; }
+@media (max-width: 559px) { .next-progress { width: 100%; grid-template-columns: 1fr auto; align-items: center; gap: .75rem; } }

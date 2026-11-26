@@ -84,3 +84,6 @@ export function paymentsOverview(data: DashboardData) {
 
   return { due, ongoing, paid, totalDue: due.reduce((t, o) => t + o.amount, 0), totalPaid: paid.reduce((t, o) => t + o.amount, 0) };
 }
+
+/** « En retard » : le cycle est complet depuis une semaine passée (même règle que l'accueil). */
+export const isOverdue = (doneAt: string | undefined, now = new Date()) => !!doneAt && new Date(doneAt) < weekRange(now).start;

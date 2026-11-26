@@ -5,6 +5,7 @@ import DashboardPage from "./pages/DashboardPage";
 import LessonsPage from "./pages/LessonsPage";
 import PaymentsPage from "./pages/PaymentsPage";
 import SettingsPage from "./pages/SettingsPage";
+import StudentsPage from "./pages/StudentsPage";
 import { getSession } from "./services/auth";
 
 function Protected({ children }: { children: ReactNode }) {
@@ -15,6 +16,7 @@ export default function App() {
   return (
     <Routes>
       <Route path="/" element={<Protected><DashboardPage /></Protected>} />
+      <Route path="/eleves" element={<Protected><StudentsPage /></Protected>} />
       <Route path="/cours" element={<Protected><LessonsPage /></Protected>} />
       <Route path="/paiements" element={<Protected><PaymentsPage /></Protected>} />
       <Route path="/parametres" element={<Protected><SettingsPage /></Protected>} />

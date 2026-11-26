@@ -29,7 +29,3 @@ export function lessonsToConfirm(data: DashboardData, now: Date): Lesson[] {
     .sort((a, b) => a.date.localeCompare(b.date));
 }
 
-/** Amène directement une section en haut de l'écran (saut immédiat : rien ne bouge pendant qu'on lit). */
-export function scrollToId(id: string) {
-  document.getElementById(id)?.scrollIntoView({ block: "start" });
-}

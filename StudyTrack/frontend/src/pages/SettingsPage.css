@@ -1,24 +1,10 @@
-.sgrid { display: grid; gap: 1.5rem; align-items: stretch; }
-.sheet.text { --p: #ffe9a8; transform: rotate(-.3deg); }
-.sheet.account { --p: #ffc2e8; transform: rotate(.3deg); }
-.sheet.backup { --p: #c9f0b0; transform: rotate(-.3deg); }
-.sgrid .year-note { max-width: none; margin-top: .9rem; }
-.sgrid .sub { margin-bottom: .7rem !important; }
-.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
-.chip.big { min-height: 52px; padding: 0 1.2rem; font-size: 1.3rem; }
-.sample { margin-top: .9rem !important; padding: .7rem .9rem !important; border-radius: 8px; background: rgba(255,255,255,.65); }
-.sheet .primary { width: auto; min-width: 14rem; margin-top: .6rem; }
-.dl { display: grid; grid-template-columns: auto 1fr; gap: .4rem 1rem; margin: .2rem 0 0; }
-.dl dt { color: #5a4d10; } .dl dd { margin: 0; overflow-wrap: anywhere; }
-
-/* Mes cours suivis : en colonnes pour ne laisser aucun vide */
-.board ul.egrid { display: grid; gap: 0 2rem; margin-top: .5rem; }
-.egrid .prow { padding-right: .2rem; }
-.egrid .prow .stu { font-size: 2rem; }
-.egrid .lf { margin-top: .5rem; padding: .75rem; border-radius: 10px; background: rgba(255,248,200,.7); }
-
-@media (min-width: 760px) {
-  .sgrid { grid-template-columns: 1fr 1fr; }
-  .board ul.egrid { grid-template-columns: 1fr 1fr; }
-  .egrid .prow:nth-child(2) { border-top: 0; padding-top: .2rem; }
-}
+/* Réglages */
+.settings .card-body { display: grid; gap: 1rem; justify-items: start; }
+.card-text { color: var(--text); }
+.sample { width: 100%; padding: .75rem 1rem; background: #FAFBFC; border: 1px solid var(--border); border-radius: var(--radius-sm); }
+.dl { display: grid; gap: .75rem; width: 100%; margin: 0; }
+.dl dt { color: var(--muted); font-size: .875rem; font-weight: 600; }
+.dl dd { margin: 0; overflow-wrap: anywhere; font-size: 1.0625rem; }
+.danger-card { border-color: #efcccc; }
+.danger-card .card-head h2 { color: var(--danger-text); }
+@media (max-width: 559px) { .settings .card-body .btn { width: 100%; } }

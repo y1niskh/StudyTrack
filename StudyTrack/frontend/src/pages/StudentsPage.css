@@ -1,0 +1,29 @@
+/* Élèves : recherche, liste, fiche */
+.search-bar { display: grid; gap: 1rem; padding: 1.25rem; border-bottom: 1px solid var(--border); }
+@media (min-width: 900px) { .search-bar { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr); align-items: end; } }
+@media (min-width: 560px) and (max-width: 899px) { .search-bar { grid-template-columns: 1fr 1fr; } .search-bar .search { grid-column: 1 / -1; } }
+.input-ico { position: relative; }
+.input-ico .ico { position: absolute; left: .875rem; top: 50%; transform: translateY(-50%); color: var(--muted); pointer-events: none; }
+.input-ico .input { padding-left: 2.75rem; }
+.result-count { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .5rem; min-height: 3rem; padding: .25rem 1.25rem; color: var(--muted); font-size: .9375rem; border-bottom: 1px solid var(--border); }
+.result-count:empty { display: none; }
+
+.detail-top { margin-bottom: -.75rem; }
+.detail-top .btn-link { padding-left: 0; }
+.student-head { display: flex; flex-wrap: wrap; align-items: center; gap: 1rem 1.25rem; }
+.student-head h1 { font-size: 1.75rem; line-height: 1.2; font-weight: 700; }
+.student-head .row-text { flex: 1 1 12rem; }
+.student-actions { display: flex; flex-wrap: wrap; gap: .625rem; flex-basis: 100%; padding-top: .25rem; }
+
+.subject { padding: 1.125rem 1.25rem; }
+.subject + .subject { border-top: 1px solid var(--border); }
+.subject-head { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: .75rem 1rem; margin-bottom: .875rem; }
+.facts { display: grid; gap: .75rem; margin: 0; }
+@media (min-width: 900px) { .facts { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+.facts > div { padding: .75rem .875rem; background: #FAFBFC; border: 1px solid var(--border); border-radius: var(--radius-sm); }
+.facts dt { margin-bottom: .25rem; color: var(--muted); font-size: .875rem; font-weight: 600; }
+.facts dd { display: grid; gap: .5rem; margin: 0; }
+
+@media (max-width: 559px) {
+  .student-row .row-actions, .student-row .row-actions .btn, .student-actions .btn, .subject-head .btn { width: 100%; }
+}

@@ -1,4 +1,0 @@
-.opt.day:has(input:checked) { background: var(--ink); }
-.lf-hint { margin: 0; font-size: 1.05rem; color: #5a4d10; }
-.sheet .lf-status { gap: .4rem; }
-.opt.day { min-height: 42px; padding: 0 .8rem; }
