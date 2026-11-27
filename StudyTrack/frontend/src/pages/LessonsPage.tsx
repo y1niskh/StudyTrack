@@ -10,12 +10,13 @@ import { addDays, studentColor, weekRange } from "../lib/cycles";
 import { dayKey, timeOf, toISO } from "../lib/lessons";
 import { isVirtual, lessonsToConfirm, occurrences, slotsSentence, WEEKDAYS } from "../lib/slots";
 import { cap, fmt, useAppData } from "../lib/useAppData";
-import { createLesson, createOneOffLesson, createSlots, deleteLesson, deleteSlot, updateLesson } from "../services/api";
+import { createLesson, createOneOffLesson, createSlots, deleteLesson, moveSlot, stopSlot, updateLesson } from "../services/api";
+import SlotMoveForm from "../components/SlotMoveForm";
 import type { Lesson, LessonStatus, Slot } from "../types";
 import "./LessonsPage.css";
 
 type Patch = Partial<Pick<Lesson, "date" | "status" | "notes">>;
-type Dialog = { kind: "slot" } | { kind: "one" } | { kind: "edit"; lesson: Lesson; confirmDelete: boolean } | { kind: "stop"; slot: Slot } | null;
+type Dialog = { kind: "slot" } | { kind: "one" } | { kind: "edit"; lesson: Lesson; confirmDelete: boolean } | { kind: "stop"; slot: Slot } | { kind: "move"; slot: Slot } | null;
 
 export default function LessonsPage() {
   const { data, error, notice, busy, load, run, clearNotice, clearError } = useAppData();
@@ -59,6 +60,8 @@ export default function LessonsPage() {
   const close = () => { setDialog(null); clearError(); };
   const act = async (job: () => Promise<unknown>, ok: string) => { if (await run(job, ok)) setDialog(null); };
   const modalError = error && dialog ? <Notice kind="error">{error}</Notice> : null;
+  /* Les cours passés pas encore confirmés de ce cours chaque semaine (calculés, pas encore enregistrés) */
+  const pendingOf = (s: Slot) => toConfirm.filter((l) => isVirtual(l.id) && l.slotId === s.id);
 
   const person = (l: Lesson) => {
     const e = byId.get(l.enrollmentId)!;
@@ -176,7 +179,10 @@ export default function LessonsPage() {
                           <div className="row-text"><p className="row-title">{e.studentName}</p><p className="row-sub">{e.subjectName} avec {e.teacherName}</p></div>
                         </div>
                         <p className="row-when"><Icon n="repeat" /> Chaque {WEEKDAYS[s.weekday]} à {s.time}</p>
-                        <div className="row-actions"><button type="button" className="btn btn-danger-outline btn-sm" onClick={() => { clearNotice(); setDialog({ kind: "stop", slot: s }); }}>Arrêter ce cours</button></div>
+                        <div className="row-actions">
+                          <button type="button" className="btn btn-secondary btn-sm" onClick={() => { clearNotice(); setDialog({ kind: "move", slot: s }); }}><Icon n="edit" /> Modifier le jour ou l'heure</button>
+                          <button type="button" className="btn btn-danger-outline btn-sm" onClick={() => { clearNotice(); setDialog({ kind: "stop", slot: s }); }}>Arrêter ce cours</button>
+                        </div>
                       </li>
                     );
                   })}
@@ -229,11 +235,23 @@ export default function LessonsPage() {
         ))}
       </Modal>
 
+      {dialog?.kind === "move" && (() => {
+        const s = dialog.slot; const e = byId.get(s.enrollmentId);
+        return (
+          <Modal open title="Modifier le jour ou l'heure" onClose={close}>
+            {e && <p className="modal-intro"><strong>{e.studentName}</strong> · {e.subjectName} avec {e.teacherName}. Aujourd'hui : chaque {WEEKDAYS[s.weekday]} à {s.time}.</p>}
+            {modalError}
+            {e && <SlotMoveForm slot={s} busy={busy} onCancel={close}
+              onSubmit={(to) => void act(() => moveSlot(s, e, to, pendingOf(s)), `Cours modifié : ${e.studentName}, maintenant chaque ${WEEKDAYS[to.weekday]} à ${to.time}.`)} />}
+          </Modal>
+        );
+      })()}
+
       {dialog?.kind === "stop" && (() => {
         const e = byId.get(dialog.slot.enrollmentId);
         return (
           <Confirm open title="Arrêter ce cours ?" confirmLabel="Oui, arrêter ce cours" tone="danger" busy={busy} onCancel={close}
-            onConfirm={() => void act(() => deleteSlot(dialog.slot.id), "Ce cours ne se répète plus. Les cours passés sont gardés.")}>
+            onConfirm={() => void act(() => stopSlot(dialog.slot.id, pendingOf(dialog.slot)), "Ce cours ne se répète plus. Les cours passés sont gardés.")}>
             {modalError}
             <p>Le cours de <strong>{e?.studentName}</strong> ({e?.subjectName}) du {WEEKDAYS[dialog.slot.weekday]} à {dialog.slot.time} ne s'affichera plus les semaines suivantes.</p>
             <p className="muted">Les cours déjà passés et les paiements sont gardés.</p>

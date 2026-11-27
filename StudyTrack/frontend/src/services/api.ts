@@ -9,7 +9,7 @@
    PATCH  /enrollments/:id      POST   /reset-year        POST   /enrollments
    (+ POST /auth/register, POST /auth/login dans auth.ts)
    ============================================================================================ */
-import type { DashboardData, Enrollment, EnrollmentInput, EnrollmentPatch, LessonInput, SlotInput } from "../types";
+import type { DashboardData, Enrollment, EnrollmentInput, EnrollmentPatch, Lesson, LessonInput, Slot, SlotInput } from "../types";
 import { req } from "./http";
 
 const json = (body: unknown) => JSON.stringify(body);
@@ -69,6 +69,29 @@ export async function createSlots(inputs: SlotInput[]): Promise<void> {
 /** Arrête un cours qui se répète : supprime ses cours prévus à venir, garde tout le passé. */
 export async function deleteSlot(id: string): Promise<void> {
   await req(`/slots/${id}`, { method: "DELETE" });
+}
+
+/** Les cours passés pas encore confirmés d'un cours chaque semaine ne sont que calculés : avant de supprimer ce jour,
+    on les enregistre comme vrais cours « prévus », pour qu'ils restent dans « Cours à confirmer ». */
+async function keepPending(pending: Lesson[]) {
+  for (const l of pending) {
+    await createLesson({ enrollmentId: l.enrollmentId, date: l.date, status: "planned", slotId: l.slotId, occurrence: l.occurrence });
+  }
+}
+
+/** « Arrêter ce cours » : garde les cours passés à confirmer, puis supprime le jour de la semaine. */
+export async function stopSlot(id: string, pending: Lesson[]): Promise<void> {
+  await keepPending(pending);
+  await deleteSlot(id);
+}
+
+/** Change le jour et/ou l'heure d'un cours chaque semaine, à partir d'aujourd'hui : garde les cours passés à confirmer,
+    crée le nouveau jour (même élève, matière, enseignant ; le cours suivi et ses paiements ne changent pas), puis
+    supprime l'ancien. Si le nouveau jour existe déjà (409), rien n'est supprimé. */
+export async function moveSlot(slot: Slot, e: Enrollment, to: { weekday: number; time: string }, pending: Lesson[]): Promise<void> {
+  await keepPending(pending);
+  await createSlot({ studentName: e.studentName, subjectName: e.subjectName, teacherName: e.teacherName, weekday: to.weekday, time: to.time, cycleSize: e.cycleSize, price: e.price });
+  await deleteSlot(slot.id);
 }
 
 /** « Payé » : marque le cycle comme réglé en espèces (date = maintenant). */
