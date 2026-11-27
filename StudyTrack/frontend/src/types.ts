@@ -27,5 +27,8 @@ export interface PaymentCycle {
 }
 export interface DashboardData { enrollments: Enrollment[]; lessons: Lesson[]; cycles: PaymentCycle[]; slots: Slot[] }
 
+/** Créer (ou retrouver) un cours suivi sans jour de la semaine (cours ponctuel). */
+export interface EnrollmentInput { studentName: string; subjectName: string; teacherName: string; cycleSize: number; price?: number }
+
 /** Modification d'un cours suivi. `price: null` retire le prix. */
 export interface EnrollmentPatch { cycleSize?: number; price?: number | null }

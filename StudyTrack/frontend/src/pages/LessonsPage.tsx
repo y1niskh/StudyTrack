@@ -10,7 +10,7 @@ import { addDays, studentColor, weekRange } from "../lib/cycles";
 import { dayKey, timeOf, toISO } from "../lib/lessons";
 import { isVirtual, lessonsToConfirm, occurrences, slotsSentence, WEEKDAYS } from "../lib/slots";
 import { cap, fmt, useAppData } from "../lib/useAppData";
-import { createLesson, createSlots, deleteLesson, deleteSlot, updateLesson } from "../services/api";
+import { createLesson, createOneOffLesson, createSlots, deleteLesson, deleteSlot, updateLesson } from "../services/api";
 import type { Lesson, LessonStatus, Slot } from "../types";
 import "./LessonsPage.css";
 
@@ -78,7 +78,7 @@ export default function LessonsPage() {
       <div className="page">
         <PageHeader title="Planning des cours" sub="Les cours de la semaine, jour par jour.">
           {data && <button type="button" className="btn btn-primary" onClick={() => { clearNotice(); setDialog({ kind: "slot" }); }}><Icon n="plus" /> Ajouter un cours</button>}
-          {data && enrollments.length > 0 && <button type="button" className="btn btn-secondary" onClick={() => { clearNotice(); setDialog({ kind: "one" }); }}>Ajouter un cours ponctuel</button>}
+          {data && <button type="button" className="btn btn-secondary" onClick={() => { clearNotice(); setDialog({ kind: "one" }); }}>Ajouter un cours ponctuel</button>}
         </PageHeader>
 
         <PageMessages loaded={!!data} error={dialog ? "" : error} notice={notice} onRetry={() => void load()} onCloseError={clearError} onCloseNotice={clearNotice} />
@@ -195,10 +195,10 @@ export default function LessonsPage() {
       </Modal>
 
       <Modal open={dialog?.kind === "one"} title="Ajouter un cours ponctuel" onClose={close}>
-        <p className="modal-intro">Pour un cours qui n'a lieu qu'une fois (un rattrapage, par exemple).</p>
+        <p className="modal-intro">Pour un cours qui n'a lieu qu'une fois : un rattrapage, ou un cours avec un enseignant quand l'élève en a besoin.</p>
         {modalError}
-        <LessonForm enrollments={enrollments} initial={blank} submitLabel="Ajouter ce cours" busy={busy} onCancel={close}
-          onSubmit={(v) => void act(() => createLesson({ enrollmentId: v.enrollmentId, ...body(v) }), "Cours ajouté au planning.")} />
+        <LessonForm enrollments={enrollments} names={{ students, subjects: uniq((e) => e.subjectName), teachers: uniq((e) => e.teacherName) }} initial={blank} submitLabel="Ajouter ce cours" busy={busy} onCancel={close}
+          onSubmit={(v) => void act(() => createOneOffLesson(v.newCourse ? { newCourse: v.newCourse } : { enrollmentId: v.enrollmentId }, body(v)), "Cours ponctuel ajouté au planning.")} />
       </Modal>
 
       <Modal open={!!editing} title="Modifier le cours" onClose={close}>

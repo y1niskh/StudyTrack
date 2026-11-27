@@ -80,7 +80,10 @@ Exemples :
 ### Cours suivis (inscriptions)
 | Route | Corps | Réponse |
 |---|---|---|
+| `POST /enrollments` | `{ studentName, subjectName, teacherName, cycleSize, price? }` | `201` l'`Enrollment` (avec les noms) |
 | `PATCH /enrollments/:id` | `{ cycleSize?, price? }` | `200` l'`Enrollment` (avec les noms, voir §2) |
+
+- `POST /enrollments` : **cours ponctuel** avec un enseignant ou une matière pas encore enregistrés. Le serveur retrouve ou crée l'élève, l'enseignant, la matière puis l'inscription, **sans `Slot`** (aucun jour de la semaine) ; mêmes règles et mêmes messages `400` que `POST /slots` (noms comparés sans majuscules ni espaces autour ; `cycleSize` et `price` ignorés si l'inscription existe déjà). Le frontend envoie `cycleSize: 1` (1 cours = 1 paiement), puis `POST /lessons` avec l'`id` reçu.
 
 - `cycleSize` : entier ≥ 1 (sinon `400` « Le nombre de cours avant paiement doit être un nombre entier, par exemple 4. »). `price` : nombre ≥ 0, ou **`null` pour retirer le prix** (sinon `400` « Le prix doit être un nombre, par exemple 6000. »).
 - **Les cycles déjà payés ne changent jamais.** Un nouveau `price` est recopié dans `amount` de tous les cycles **non payés** de cette inscription. Aucune séance n'est déplacée d'un cycle à l'autre. Un cycle non payé est « à payer » dès sa 1re séance (le frontend le calcule) ; un cycle qui contient plus de séances que le nouveau `cycleSize` reste tel quel.

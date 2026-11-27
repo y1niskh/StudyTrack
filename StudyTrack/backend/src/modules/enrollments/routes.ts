@@ -3,8 +3,8 @@ import type { Config } from "../../config.ts";
 import type { Db } from "../../db.ts";
 import { idParam, parseBody } from "../../errors.ts";
 import { currentUser, requireAuth } from "../auth/middleware.ts";
-import { enrollmentPatch } from "./schema.ts";
-import { listEnrollments, NOT_FOUND, updateEnrollment } from "./service.ts";
+import { enrollmentCreate, enrollmentPatch } from "./schema.ts";
+import { createEnrollment, listEnrollments, NOT_FOUND, updateEnrollment } from "./service.ts";
 
 export function enrollmentRoutes(db: Db, cfg: Config) {
   const r = express.Router();
@@ -12,6 +12,10 @@ export function enrollmentRoutes(db: Db, cfg: Config) {
 
   r.get("/", async (_req, res) => {
     res.json(await listEnrollments(db, currentUser(res).id));
+  });
+
+  r.post("/", async (req, res) => {
+    res.status(201).json(await createEnrollment(db, currentUser(res).id, parseBody(enrollmentCreate, req.body)));
   });
 
   r.patch("/:id", async (req, res) => {

@@ -103,3 +103,41 @@ test("PATCH sur un id inconnu ou mal formé : 404", async () => {
   const garbage = await t.api("/enrollments/pas-un-id", { method: "PATCH", body: "{}", headers: { Cookie: cookie } });
   assert.equal(garbage.status, 404);
 });
+
+/* Cours ponctuel avec un enseignant ou une matière pas encore enregistrés : POST /enrollments crée (ou retrouve)
+   l'élève, l'enseignant, la matière et le cours suivi, SANS jour de la semaine. */
+const create = (body: unknown) =>
+  t.api("/enrollments", { method: "POST", body: JSON.stringify(body), headers: { Cookie: cookie } });
+
+test("POST /enrollments : crée le cours suivi à plat, sans aucun cours chaque semaine", async () => {
+  const slotsBefore = await get("/slots");
+  const res = await create({ studentName: "Amine", subjectName: "Physique", teacherName: "Mme Kaci", cycleSize: 1, price: 2500 });
+  assert.equal(res.status, 201);
+  const e = await res.json();
+  assert.equal(e.studentName, "Amine");
+  assert.equal(e.subjectName, "Physique");
+  assert.equal(e.teacherName, "Mme Kaci");
+  assert.equal(e.cycleSize, 1);
+  assert.equal(e.price, 2500);
+  assert.deepEqual(await get("/slots"), slotsBefore);
+  assert.ok((await get("/enrollments")).some((x: { id: string }) => x.id === e.id));
+});
+
+test("POST /enrollments : mêmes noms (majuscules et espaces ignorés) → le même cours suivi, réglages gardés", async () => {
+  const first = await (await create({ studentName: "Yanis", subjectName: "Chimie", teacherName: "M. Haddad", cycleSize: 1, price: 3000 })).json();
+  const again = await create({ studentName: "  yanis ", subjectName: "CHIMIE", teacherName: "m. haddad", cycleSize: 4, price: 1 });
+  assert.equal(again.status, 201);
+  const e = await again.json();
+  assert.equal(e.id, first.id);
+  assert.equal(e.cycleSize, 1);
+  assert.equal(e.price, 3000);
+});
+
+test("POST /enrollments : noms manquants ou nombre de cours invalide → 400 avec le message du contrat", async () => {
+  const noTeacher = await create({ studentName: "Amine", subjectName: "Physique", teacherName: " ", cycleSize: 1 });
+  assert.equal(noTeacher.status, 400);
+  assert.equal((await noTeacher.json()).message, "Indique le nom de l'enseignant.");
+  const badSize = await create({ studentName: "Amine", subjectName: "Physique", teacherName: "Mme Kaci", cycleSize: 0 });
+  assert.equal(badSize.status, 400);
+  assert.equal((await badSize.json()).message, "Le nombre de cours avant paiement doit être un nombre entier, par exemple 4.");
+});

@@ -10,7 +10,9 @@ import { Avatar, Badge, Empty, Notice, PageHeader, PageMessages } from "../compo
 import { activeEnrollmentIds, isOverdue, ongoingText, paymentsOverview, studentColor } from "../lib/cycles";
 import { slotsSentence } from "../lib/slots";
 import { fmt, money, useAppData } from "../lib/useAppData";
-import { createSlots, markPaid, updateEnrollment } from "../services/api";
+import { createOneOffLesson, createSlots, markPaid, updateEnrollment } from "../services/api";
+import LessonForm from "../components/LessonForm";
+import { dayKey, toISO } from "../lib/lessons";
 import type { Enrollment } from "../types";
 import "./StudentsPage.css";
 
@@ -24,7 +26,8 @@ export default function StudentsPage() {
   const [subject, setSubject] = useState("");
   const [teacher, setTeacher] = useState("");
   const [showOld, setShowOld] = useState(false);
-  const [dialog, setDialog] = useState<{ kind: "add"; student: string; subject?: string; teacher?: string } | { kind: "edit"; e: Enrollment } | null>(null);
+  const [today] = useState(() => dayKey(new Date()));
+  const [dialog, setDialog] = useState<{ kind: "add"; student: string; subject?: string; teacher?: string } | { kind: "one"; student: string } | { kind: "edit"; e: Enrollment } | null>(null);
   const uid = useId();
 
   const enrollments = data?.enrollments ?? [];
@@ -139,7 +142,8 @@ export default function StudentsPage() {
               </div>
               {status(current)}
               <div className="student-actions">
-                <button type="button" className="btn btn-primary" onClick={() => { clearNotice(); setDialog({ kind: "add", student: current.name }); }}><Icon n="plus" /> Ajouter un cours pour {current.name}</button>
+                <button type="button" className="btn btn-primary" onClick={() => { clearNotice(); setDialog({ kind: "add", student: current.name }); }}><Icon n="plus" /> Ajouter un cours chaque semaine</button>
+                <button type="button" className="btn btn-secondary" onClick={() => { clearNotice(); setDialog({ kind: "one", student: current.name }); }}><Icon n="plus" /> Ajouter un cours ponctuel</button>
                 <Link className="btn btn-secondary" to={`/cours?eleve=${encodeURIComponent(current.name)}`}><Icon n="calendar" /> Voir son planning</Link>
               </div>
             </header>
@@ -178,7 +182,7 @@ export default function StudentsPage() {
 
             {current.stopped.length > 0 && (
               <p className="stopped-note muted">
-                Cours arrêtés : {current.stopped.map((e) => `${e.subjectName} avec ${e.teacherName}`).join(", ")}. Leurs cours passés et leurs paiements restent dans l'historique.
+                Autres cours (ponctuels ou arrêtés) : {current.stopped.map((e) => `${e.subjectName} avec ${e.teacherName}`).join(", ")}. Leurs cours passés et leurs paiements restent dans l'historique.
               </p>
             )}
 
@@ -227,6 +231,20 @@ export default function StudentsPage() {
           <SlotForm initial={{ studentName: dialog.student, subjectName: dialog.subject, teacherName: dialog.teacher }} students={uniq((e) => e.studentName)} subjects={uniq((e) => e.subjectName)} teachers={uniq((e) => e.teacherName)} busy={busy} onCancel={close}
             submitLabel={dialog.student ? "Ajouter ce cours" : "Ajouter cet élève"}
             onSubmit={async (list) => { if (await run(() => createSlots(list), dialog.student ? `Cours ajouté : ${slotsSentence(list)}.` : `${list[0].studentName} est ajouté(e), avec son cours ${slotsSentence(list)}.`)) setDialog(null); }} />
+        )}
+      </Modal>
+
+      <Modal open={dialog?.kind === "one"} title={dialog?.kind === "one" ? `Cours ponctuel pour ${dialog.student}` : ""} onClose={close}>
+        <p className="modal-intro">Un cours qui n'a lieu qu'une fois, avec un enseignant déjà enregistré ou un nouveau.</p>
+        {modalError}
+        {dialog?.kind === "one" && (
+          <LessonForm enrollments={enrollments.filter((e) => e.studentName === dialog.student)} initialStudent={dialog.student}
+            names={{ students: uniq((e) => e.studentName), subjects: uniq((e) => e.subjectName), teachers: uniq((e) => e.teacherName) }}
+            initial={{ enrollmentId: "", date: today, time: "16:00", status: "planned", notes: "" }} submitLabel="Ajouter ce cours" busy={busy} onCancel={close}
+            onSubmit={async (v) => {
+              const lesson = { date: toISO(v.date, v.time), status: v.status, notes: v.notes.trim() || undefined };
+              if (await run(() => createOneOffLesson(v.newCourse ? { newCourse: v.newCourse } : { enrollmentId: v.enrollmentId }, lesson), "Cours ponctuel ajouté au planning.")) setDialog(null);
+            }} />
         )}
       </Modal>
 

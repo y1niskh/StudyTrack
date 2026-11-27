@@ -6,10 +6,10 @@
    POST   /lessons              PATCH  /lessons/:id     DELETE /lessons/:id
    POST   /slots                DELETE /slots/:id       PATCH  /enrollments/:id
    PATCH  /payment-cycles/:id/mark-paid                 PATCH  /payment-cycles/:id/mark-unpaid
-   PATCH  /enrollments/:id      POST   /reset-year
+   PATCH  /enrollments/:id      POST   /reset-year        POST   /enrollments
    (+ POST /auth/register, POST /auth/login dans auth.ts)
    ============================================================================================ */
-import type { DashboardData, EnrollmentPatch, LessonInput, SlotInput } from "../types";
+import type { DashboardData, Enrollment, EnrollmentInput, EnrollmentPatch, LessonInput, SlotInput } from "../types";
 import { req } from "./http";
 
 const json = (body: unknown) => JSON.stringify(body);
@@ -28,6 +28,21 @@ export async function fetchDashboard(): Promise<DashboardData> {
 /** Ajoute un cours (une séance). Si `status` = completed, le serveur la range dans un cycle. */
 export async function createLesson(input: LessonInput): Promise<void> {
   await req("/lessons", { method: "POST", body: json(input) });
+}
+
+/** Crée (ou retrouve, mêmes noms) un cours suivi SANS jour de la semaine : pour un cours ponctuel avec un enseignant
+    ou une matière pas encore enregistrés. Un cours suivi qui existe déjà garde son nombre de cours et son prix. */
+export async function createEnrollment(input: EnrollmentInput): Promise<Enrollment> {
+  return req<Enrollment>("/enrollments", { method: "POST", body: json(input) });
+}
+
+/** Cours ponctuel : avec un cours suivi déjà enregistré (`enrollmentId`), ou un nouveau (`newCourse`, 1 cours = 1 paiement). */
+export async function createOneOffLesson(
+  course: { enrollmentId: string } | { newCourse: Omit<EnrollmentInput, "cycleSize"> },
+  lesson: Omit<LessonInput, "enrollmentId">,
+): Promise<void> {
+  const enrollmentId = "enrollmentId" in course ? course.enrollmentId : (await createEnrollment({ ...course.newCourse, cycleSize: 1 })).id;
+  await createLesson({ enrollmentId, ...lesson });
 }
 
 /** Modifie date, statut ou notes. 409 si le cours est dans un cycle déjà payé. */
