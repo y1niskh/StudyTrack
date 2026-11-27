@@ -63,6 +63,10 @@ export function studentColor(enrollments: Enrollment[]) {
 
 const ORDER = { due: 0, paid: 1, next: 2 } as const;
 
+/** Les cours suivis qui ont encore au moins un jour dans la semaine. « Arrêter ce cours » supprime le jour, mais garde
+    le cours suivi sur le serveur (pour l'historique des séances et des paiements) : il n'est simplement plus « en cours ». */
+export const activeEnrollmentIds = (data: DashboardData) => new Set(data.slots.map((s) => s.enrollmentId));
+
 /** Tout ce qu'il faut pour la page Paiements (tous les cycles, sans limite de semaine). */
 export function paymentsOverview(data: DashboardData) {
   const byId = new Map(data.enrollments.map((e) => [e.id, e]));
@@ -79,7 +83,9 @@ export function paymentsOverview(data: DashboardData) {
      - "paid" : déjà payé ; `remaining` cours restent avant le prochain paiement (qui se fera au cours suivant) ;
      - "due"  : commencé et pas encore payé (il est aussi dans `due`) ;
      - "next" : pas de cycle commencé ; le prochain cours effectué ouvre un cycle, à payer ce jour-là. */
+  const active = activeEnrollmentIds(data);
   const ongoing = data.enrollments
+    .filter((e) => active.has(e.id)) // un cours arrêté n'a plus de « prochain paiement »
     .map((enrollment) => {
       const cycle = currentCycle(data.cycles, enrollment);
       const done = cycle ? cycleProgress(cycle, enrollment, data.lessons).done : 0;

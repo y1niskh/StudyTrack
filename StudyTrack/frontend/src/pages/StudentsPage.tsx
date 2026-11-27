@@ -7,7 +7,7 @@ import { Modal } from "../components/Modal";
 import PaymentItem from "../components/PaymentItem";
 import SlotForm from "../components/SlotForm";
 import { Avatar, Badge, Empty, Notice, PageHeader, PageMessages } from "../components/ui";
-import { isOverdue, ongoingText, paymentsOverview, studentColor } from "../lib/cycles";
+import { activeEnrollmentIds, isOverdue, ongoingText, paymentsOverview, studentColor } from "../lib/cycles";
 import { slotsSentence } from "../lib/slots";
 import { fmt, money, useAppData } from "../lib/useAppData";
 import { createSlots, markPaid, updateEnrollment } from "../services/api";
@@ -23,6 +23,7 @@ export default function StudentsPage() {
   const [q, setQ] = useState("");
   const [subject, setSubject] = useState("");
   const [teacher, setTeacher] = useState("");
+  const [showOld, setShowOld] = useState(false);
   const [dialog, setDialog] = useState<{ kind: "add"; student: string; subject?: string; teacher?: string } | { kind: "edit"; e: Enrollment } | null>(null);
   const uid = useId();
 
@@ -32,20 +33,27 @@ export default function StudentsPage() {
   const uniq = (f: (e: Enrollment) => string) => [...new Set(enrollments.map(f))].sort((a, b) => a.localeCompare(b));
   const norm = (t: string) => t.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase().trim();
 
+  const activeIds = data ? activeEnrollmentIds(data) : new Set<string>();
+  /* Pour chaque élève : ses cours en cours (avec au moins un jour par semaine) et ses cours arrêtés.
+     Un élève sans aucun cours en cours ni paiement à faire est un « ancien élève » : caché de la liste par défaut. */
   const students = uniq((e) => e.studentName).map((name) => {
     const list = enrollments.filter((e) => e.studentName === name).sort((a, b) => a.subjectName.localeCompare(b.subjectName));
+    const active = list.filter((e) => activeIds.has(e.id));
+    const stopped = list.filter((e) => !activeIds.has(e.id));
     const due = (o?.due ?? []).filter((x) => x.enrollment.studentName === name);
     const weekly = (data?.slots ?? []).filter((s) => list.some((e) => e.id === s.enrollmentId)).length;
-    return { name, list, due, weekly, late: due.some((x) => isOverdue(x.dueAt)) };
+    return { name, list, active, stopped, due, weekly, current: active.length > 0 || due.length > 0, late: due.some((x) => isOverdue(x.dueAt)) };
   });
-  const shown = students.filter((s) =>
+  const oldCount = students.filter((s) => !s.current).length;
+  const listed = students.filter((s) => showOld || s.current);
+  const shown = listed.filter((s) =>
     (!q || norm(s.name).includes(norm(q))) && (!subject || s.list.some((e) => e.subjectName === subject)) && (!teacher || s.list.some((e) => e.teacherName === teacher)));
   const current = students.find((s) => s.name === params.get("eleve"));
   const open = (name: string | null) => { clearNotice(); setParams(name ? { eleve: name } : {}); window.scrollTo(0, 0); };
   const close = () => { setDialog(null); clearError(); };
   const modalError = error && dialog ? <Notice kind="error">{error}</Notice> : null;
   const status = (s: (typeof students)[number]) =>
-    s.late ? <Badge tone="danger">Paiement en retard</Badge> : s.due.length ? <Badge tone="warning">Paiement à faire</Badge> : <Badge tone="success">À jour</Badge>;
+    s.late ? <Badge tone="danger">Paiement en retard</Badge> : s.due.length ? <Badge tone="warning">Paiement à faire</Badge> : !s.current ? <Badge tone="neutral">Ancien élève</Badge> : <Badge tone="success">À jour</Badge>;
 
   return (
     <AppLayout>
@@ -85,10 +93,18 @@ export default function StudentsPage() {
               </div>
             </div>
             <p className="result-count" role="status">
-              {students.length === 0 ? "" : shown.length === students.length ? `${students.length} élève${students.length > 1 ? "s" : ""}` : `${shown.length} élève${shown.length > 1 ? "s" : ""} sur ${students.length}`}
+              {listed.length === 0 ? "" : shown.length === listed.length ? `${listed.length} élève${listed.length > 1 ? "s" : ""}` : `${shown.length} élève${shown.length > 1 ? "s" : ""} sur ${listed.length}`}
               {(q || subject || teacher) && <button type="button" className="btn btn-link" onClick={() => { setQ(""); setSubject(""); setTeacher(""); }}>Effacer la recherche</button>}
             </p>
-            {students.length === 0 ? (
+            {oldCount > 0 && (
+              <p className="old-toggle">
+                <button type="button" className="btn btn-link" aria-pressed={showOld} onClick={() => setShowOld(!showOld)}>
+                  {showOld ? "Masquer les anciens élèves" : `Afficher aussi les anciens élèves (${oldCount})`}
+                </button>
+                <span className="muted">Anciens élèves : plus aucun cours chaque semaine.</span>
+              </p>
+            )}
+            {listed.length === 0 ? (
               <Empty icon="users" title="Aucun élève pour le moment">Appuie sur « Ajouter un élève » pour écrire son premier cours de la semaine.</Empty>
             ) : shown.length === 0 ? (
               <Empty icon="search" title="Aucun élève trouvé">Vérifie l'orthographe ou efface la recherche.</Empty>
@@ -100,7 +116,7 @@ export default function StudentsPage() {
                       <Avatar name={s.name} color={color(s.name)} />
                       <div className="row-text">
                         <p className="row-title">{s.name}</p>
-                        <p className="row-sub">{s.list.map((e) => `${e.subjectName} (${e.teacherName})`).join(", ")}</p>
+                        <p className="row-sub">{(s.active.length ? s.active : s.list).map((e) => `${e.subjectName} (${e.teacherName})`).join(", ")}</p>
                         <p className="row-sub">{s.weekly === 0 ? "Aucun cours chaque semaine" : `${s.weekly} cours par semaine`}</p>
                       </div>
                     </div>
@@ -119,7 +135,7 @@ export default function StudentsPage() {
               <Avatar name={current.name} color={color(current.name)} large />
               <div className="row-text">
                 <h1>{current.name}</h1>
-                <p className="muted">{current.list.length} matière{current.list.length > 1 ? "s" : ""} · {current.weekly} cours par semaine</p>
+                <p className="muted">{current.active.length} matière{current.active.length > 1 ? "s" : ""} · {current.weekly} cours par semaine</p>
               </div>
               {status(current)}
               <div className="student-actions">
@@ -131,7 +147,8 @@ export default function StudentsPage() {
             <section className="card" aria-labelledby="h-subj">
               <div className="card-head"><h2 id="h-subj">Matières suivies</h2><p className="card-sub">Pour chaque matière : l'enseignant, les jours de cours, et quand on paie.</p></div>
               <ul className="rows">
-                {current.list.map((e) => {
+                {current.active.length === 0 && <li><Empty small>Plus aucun cours chaque semaine pour {current.name}.</Empty></li>}
+                {current.active.map((e) => {
                   const ongoing = o?.ongoing.find((x) => x.enrollment.id === e.id);
                   const weekly = (data.slots ?? []).filter((s) => s.enrollmentId === e.id);
                   return (
@@ -158,6 +175,12 @@ export default function StudentsPage() {
                 })}
               </ul>
             </section>
+
+            {current.stopped.length > 0 && (
+              <p className="stopped-note muted">
+                Cours arrêtés : {current.stopped.map((e) => `${e.subjectName} avec ${e.teacherName}`).join(", ")}. Leurs cours passés et leurs paiements restent dans l'historique.
+              </p>
+            )}
 
             <section className="card" aria-labelledby="h-due">
               <div className="card-head"><h2 id="h-due">Paiements à faire</h2></div>
