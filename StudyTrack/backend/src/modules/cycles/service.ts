@@ -17,14 +17,17 @@ export async function listCycles(db: Db, ownerId: string) {
 
 const getCycle = async (q: Query, id: string) => compact((await q(`${SELECT} where c.id = $1`, [id])).rows[0]);
 
-/** Règle 2 : le premier cycle non payé et pas plein de l'inscription (par numéro croissant) ; s'il n'y en a pas, un
-    nouveau cycle (numéro suivant, montant = prix de l'inscription). À appeler dans une transaction qui a verrouillé
-    l'inscription : deux séances confirmées en même temps ne peuvent pas prendre la même dernière place. */
+/** Règle 2 (paiement au premier cours) : le premier cycle pas plein de l'inscription (par numéro croissant), parmi les
+    cycles non payés et le dernier cycle même s'il est déjà payé (payé dès sa 1re séance, il se complète ensuite).
+    Un ancien cycle payé (qui n'est plus le dernier) ne reçoit jamais de séance. S'il n'y en a pas : un nouveau cycle
+    (numéro suivant, montant = prix de l'inscription). À appeler dans une transaction qui a verrouillé l'inscription :
+    deux séances confirmées en même temps ne peuvent pas prendre la même dernière place. */
 export async function cycleFor(q: Query, ownerId: string, enrollmentId: string): Promise<string> {
   const open = (await q(
     `select c.id from payment_cycles c join enrollments e on e.id = c.enrollment_id
-     where c.enrollment_id = $1 and c.owner_id = $2 and c.status = 'unpaid'
+     where c.enrollment_id = $1 and c.owner_id = $2
        and (select count(*) from lessons l where l.cycle_id = c.id) < e.cycle_size
+       and (c.status = 'unpaid' or c.number = (select max(number) from payment_cycles where enrollment_id = c.enrollment_id))
      order by c.number limit 1`,
     [enrollmentId, ownerId],
   )).rows[0];
@@ -62,7 +65,8 @@ export async function markPaid(db: Db, ownerId: string, id: string, body: MarkPa
   return db.tx(async (q) => {
     const c = await lockCycle(q, ownerId, id);
     if (c.status === "paid") throw new HttpError(409, "Ce cycle est déjà marqué comme payé.");
-    if (c.lessons < c.cycle_size) throw new HttpError(409, "Ce cycle n'est pas encore complet.");
+    // Paiement au premier cours : il suffit que le cycle ait commencé (au moins une séance effectuée).
+    if (c.lessons < 1) throw new HttpError(409, "Ce cycle n'a encore aucun cours.");
     const now = new Date().toISOString();
     const paidAt = body.paidAt ? new Date(body.paidAt).toISOString() : now;
     await q(`update payment_cycles set status = 'paid', paid_at = $4, ${ADD_EVENT} where id = $1`, [id, "paid", now, paidAt]);

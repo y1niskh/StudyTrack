@@ -6,14 +6,14 @@ import Icon from "./Icon";
 import { Confirm } from "./Modal";
 import { Avatar, Badge } from "./ui";
 
-/* Une ligne « à payer » : élève, matière, montant, statut écrit (« En retard » ou « À payer »),
+/* Une ligne « à payer » (on paie au premier cours du cycle) : élève, matière, montant, statut écrit (« En retard » ou « À payer »),
    bouton « Marquer comme payé » qui demande confirmation. Utilisée sur l'Accueil, la fiche élève et la page Paiements. */
-export default function PaymentItem({ cycle, enrollment: e, amount, doneAt, color, busy, detail, onPay }: {
-  cycle: PaymentCycle; enrollment: Enrollment; amount: number; doneAt?: string; color: string; busy: boolean; detail?: string;
+export default function PaymentItem({ cycle, enrollment: e, amount, dueAt, color, busy, detail, onPay }: {
+  cycle: PaymentCycle; enrollment: Enrollment; amount: number; dueAt?: string; color: string; busy: boolean; detail?: string;
   onPay: (cycleId: string) => Promise<boolean>;
 }) {
   const [asking, setAsking] = useState(false);
-  const late = isOverdue(doneAt);
+  const late = isOverdue(dueAt);
   return (
     <li className="row">
       <div className="row-main">
@@ -34,7 +34,7 @@ export default function PaymentItem({ cycle, enrollment: e, amount, doneAt, colo
       <Confirm open={asking} title="Confirmer le paiement" confirmLabel="Oui, c'est payé" tone="success" busy={busy}
         onCancel={() => setAsking(false)} onConfirm={async () => { await onPay(cycle.id); setAsking(false); }}>
         <p>As-tu bien payé <strong>{e.teacherName}</strong> pour {e.studentName} ({e.subjectName}){amount > 0 ? <> : <strong>{money(amount)}</strong></> : null} ?</p>
-        <p className="muted">Le paiement passera dans l'historique. En cas d'erreur, tu pourras le corriger depuis la page Paiements.</p>
+        <p className="muted">Ce paiement couvre les {e.cycleSize} cours de ce cycle. Il passera dans l'historique. En cas d'erreur, tu pourras le corriger depuis la page Paiements.</p>
       </Confirm>
     </li>
   );

@@ -83,7 +83,7 @@ Exemples :
 | `PATCH /enrollments/:id` | `{ cycleSize?, price? }` | `200` l'`Enrollment` (avec les noms, voir §2) |
 
 - `cycleSize` : entier ≥ 1 (sinon `400` « Le nombre de cours avant paiement doit être un nombre entier, par exemple 4. »). `price` : nombre ≥ 0, ou **`null` pour retirer le prix** (sinon `400` « Le prix doit être un nombre, par exemple 6000. »).
-- **Les cycles déjà payés ne changent jamais.** Un nouveau `price` est recopié dans `amount` de tous les cycles **non payés** de cette inscription. Aucune séance n'est déplacée d'un cycle à l'autre. Un cycle non payé qui contient déjà au moins `cycleSize` séances devient « à payer » (le frontend le calcule) ; un cycle qui en contient plus que le nouveau `cycleSize` reste tel quel.
+- **Les cycles déjà payés ne changent jamais.** Un nouveau `price` est recopié dans `amount` de tous les cycles **non payés** de cette inscription. Aucune séance n'est déplacée d'un cycle à l'autre. Un cycle non payé est « à payer » dès sa 1re séance (le frontend le calcule) ; un cycle qui contient plus de séances que le nouveau `cycleSize` reste tel quel.
 - Le frontend ne modifie que ces deux champs ; renommer un élève, un enseignant ou une matière viendra plus tard.
 
 ### Séances
@@ -112,7 +112,7 @@ Exemples :
 | `PATCH /payment-cycles/:id/mark-paid` | `{}` (date facultative `paidAt`, sinon maintenant) | `200` le `PaymentCycle` |
 | `PATCH /payment-cycles/:id/mark-unpaid` | `{}` | `200` le `PaymentCycle` |
 
-- **`mark-paid`** : le serveur **doit vérifier** que le cycle est `unpaid` et complet (`lessonIds.length >= cycleSize`), sinon `409` « Ce cycle n'est pas encore complet. » ou « Ce cycle est déjà marqué comme payé. ». Il met `status = "paid"` et `paidAt`, et ajoute l'événement `paid`. Le cycle suivant peut être créé tout de suite ou, plus simplement, au moment où une séance en aura besoin (§4) ; le frontend accepte les deux.
+- **`mark-paid`** (paiement **au premier cours** du cycle) : le serveur **doit vérifier** que le cycle est `unpaid` et a commencé (`lessonIds.length >= 1`), sinon `409` « Ce cycle n'a encore aucun cours. » ou « Ce cycle est déjà marqué comme payé. ». Il met `status = "paid"` et `paidAt`, et ajoute l'événement `paid`. Le cycle suivant peut être créé tout de suite ou, plus simplement, au moment où une séance en aura besoin (§4) ; le frontend accepte les deux.
 - **`mark-unpaid`** (correction d'une erreur de la mère) : seulement si le cycle est `paid`, sinon `409` « Ce cycle n'est pas marqué comme payé. ». Il met `status = "unpaid"`, **supprime `paidAt`**, ajoute l'événement `unpaid`. Rien d'autre n'est effacé : les séances du cycle restent dedans (elles redeviennent modifiables, voir §4 règle 6). Le frontend demande déjà une confirmation avant d'appeler cette route.
 
 ### Nouvelle année
@@ -127,33 +127,33 @@ Supprime **toutes** les données de l'utilisateur (élèves, enseignants, matiè
 Reprises du cahier des charges, avec les décisions prises pour ce qu'il laissait ouvert. Implémentation : `cycleFor`, `markPaid` et `markUnpaid` dans `backend/src/modules/cycles/service.ts`, et `backend/src/modules/lessons/service.ts`.
 
 1. **Seules les séances `completed` comptent.** Une séance `planned` ou `cancelled` n'est dans aucun cycle.
-2. **Entrer dans un cycle** (séance qui devient `completed`) : elle rejoint le **premier cycle `unpaid` de l'inscription qui n'est pas plein** (par numéro croissant). Il n'y en a pas : un nouveau cycle est créé (`number` = plus grand numéro existant + 1, `amount` = `Enrollment.price`).
+2. **Entrer dans un cycle** (séance qui devient `completed`) : elle rejoint le **premier cycle pas plein** de l'inscription (par numéro croissant), parmi les cycles `unpaid` **et le dernier cycle, même `paid`** (on paie au premier cours : le cycle payé se complète ensuite avec les séances suivantes). Un ancien cycle payé qui n'est plus le dernier ne reçoit jamais de séance (même si `cycleSize` augmente). Il n'y en a pas : un nouveau cycle est créé (`number` = plus grand numéro existant + 1, `amount` = `Enrollment.price`).
    - Conséquence voulue : si le cycle 2 est plein mais **pas encore payé**, la séance suivante va dans le cycle 3 ; elle ne « déborde » jamais dans un cycle plein.
-   - Un **ajout rétroactif** (séance `completed` avec une date passée) suit la même règle : jamais dans un cycle payé.
+   - Un **ajout rétroactif** (séance `completed` avec une date passée) suit la même règle : jamais dans un cycle payé déjà plein ni dans un ancien cycle payé.
 3. **Sortir d'un cycle** (séance qui n'est plus `completed`, ou supprimée) : son id est retiré de `lessonIds`.
-4. **Cycle « à payer »** : `status = "unpaid"` **et** `lessonIds.length >= cycleSize`.
+4. **Cycle « à payer »** (paiement au premier cours) : `status = "unpaid"` **et** `lessonIds.length >= 1`. Il est dû à la date de sa 1re séance.
 5. **Une séance n'est jamais dans deux cycles.**
 6. **Cycle payé = verrouillé** : ses séances ne peuvent plus être modifiées ni supprimées (`409`). L'historique n'est jamais détruit ; la correction d'un paiement fait par erreur est `PATCH /payment-cycles/:id/mark-unpaid` : le cycle redevient `unpaid` (donc ses séances redeviennent modifiables) et un événement d'audit est ajouté.
 7. Chaque opération qui touche à la fois une séance et un cycle doit être **atomique** (transaction MongoDB, ou à défaut une opération qui ne laisse jamais un état à moitié fait).
 
 ### Cas de test à écrire en premier (cahier §4, « tests avant le reste »)
-- Cycle de 4 : 1, 2, 3 séances `completed` → pas à payer ; la 4e → à payer.
+- Cycle de 4 : dès la 1re séance `completed` → à payer ; payé à ce moment-là, les séances 2, 3 et 4 entrent dans ce cycle payé ; la 5e ouvre le cycle 2 (nouveau paiement).
 - Séances `planned` ou `cancelled` : ne changent jamais le compteur.
 - Après `mark-paid` : la séance `completed` suivante crée/alimente le cycle suivant ; le cycle payé garde ses 4 séances et sa date.
 - Cycle 2 plein et non payé + une 5e séance → elle va dans le cycle 3.
 - Séance `completed` repassée en `cancelled` (cycle non payé) → elle sort du cycle ; le cycle n'est plus « à payer ».
 - Modifier ou supprimer une séance d'un cycle payé → `409`, rien ne change.
 - `mark-unpaid` sur un cycle payé → `unpaid`, `paidAt` supprimé, événement `unpaid` ajouté, séances inchangées et de nouveau modifiables ; sur un cycle non payé → `409`. L'historique `events` n'est jamais raccourci.
-- `mark-paid` sur un cycle incomplet → `409`.
-- Ajout rétroactif → premier cycle non payé non plein, jamais un cycle payé.
+- `mark-paid` sur un cycle sans aucune séance → `409` ; avec au moins 1 séance → `200`.
+- Ajout rétroactif → premier cycle non plein (non payé, ou le dernier cycle payé), jamais un cycle payé plein.
 - Deux inscriptions d'un même élève ont chacune leurs cycles (aucune confusion).
 - `PATCH /enrollments/:id` : les cycles payés gardent leur `amount` ; les cycles non payés prennent le nouveau prix ; `cycleSize` 0, négatif ou décimal → `400`.
 - Un utilisateur ne peut ni lire ni modifier les données d'un autre (`404`).
 
 ## 5. Ce que le frontend calcule seul (le backend n'a pas à le faire)
 
-- **Semaine** « du dimanche au samedi » (écran « À payer cette semaine », « Payés cette semaine »), « demain », « aujourd'hui », « en retard » (cycle plein dont la dernière séance date d'avant la semaine en cours).
-- **Date d'un cycle plein** : date de sa dernière séance (donc `GET /lessons` doit contenir toutes les séances référencées dans `lessonIds`).
+- **Semaine** « du dimanche au samedi » (écran « À payer cette semaine », « Payés cette semaine »), « demain », « aujourd'hui », « en retard » (cycle non payé dont la 1re séance date d'avant la semaine en cours).
+- **Date où un cycle est dû** : date de sa 1re séance (donc `GET /lessons` doit contenir toutes les séances référencées dans `lessonIds`).
 - **Occurrences des cours qui se répètent**, les séances « à confirmer », les statistiques de l'accueil.
 - Couleurs par élève, tris et filtres.
 
@@ -176,4 +176,4 @@ Le frontend ne les appelle pas aujourd'hui ; les prochaines pages les utiliseron
 1. Lancer le backend sur le port **5000** (`cd backend`, `npm run dev`).
 2. `cd frontend`, `npm install`, `npm run dev` : le proxy de Vite envoie `/api` vers le backend.
 3. En production, un seul serveur sert le site et l'API (voir `README.md`).
-4. Parcours de recette : créer un compte → se connecter → ajouter un cours « Maths, M. Arris, chaque samedi 12:00 » (page *Cours*) → confirmer des séances « à confirmer » jusqu'à remplir un cycle → l'accueil affiche « À payer cette semaine » → « Marquer comme payé » → page *Paiements* : le paiement est dans l'historique → « Corriger ce paiement » le remet à payer → page *Paramètres* : changer « tous les … cours » ou le prix d'un cours suivi ; « Nouvelle année » vide les données.
+4. Parcours de recette : créer un compte → se connecter → ajouter un cours « Maths, M. Arris, chaque samedi 12:00 » (page *Cours*) → confirmer une séance « à confirmer » → l'accueil affiche le paiement à faire (paiement au premier cours) → « Marquer comme payé » → page *Paiements* : le paiement est dans l'historique → « Corriger ce paiement » le remet à payer → page *Paramètres* : changer « tous les … cours » ou le prix d'un cours suivi ; « Nouvelle année » vide les données.

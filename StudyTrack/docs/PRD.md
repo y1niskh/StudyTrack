@@ -37,9 +37,11 @@ The backend replaces that fake server so the data is safe, shared between her ph
 Full text and the list of test cases: `API_CONTRACT.md` §4.
 
 1. Only **completed** sessions count towards a cycle.
-2. A completed session joins the **first unpaid cycle that isn't full**; if there is none, a new cycle is created.
+2. A completed session joins the **first cycle that isn't full**, among unpaid cycles and the latest cycle even if paid
+   (payment is made at the first session, so the paid cycle then fills up); if there is none, a new cycle is created.
 3. A session is never in two cycles.
-4. A cycle is **due** when it is unpaid and full (`cycleSize` sessions, e.g. 4 or 8).
+4. A cycle is **due from its first session** (payment at the start): unpaid with at least one completed session.
+   A course can have several sessions per week (one weekly slot per day).
 5. A **paid cycle is locked**: its sessions can't be changed or deleted. The only way back is "correct this payment",
    which makes it unpaid again and is recorded in a history that is never shortened.
 6. Every change touching a session and a cycle is all-or-nothing.

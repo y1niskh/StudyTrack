@@ -132,7 +132,7 @@ test("séance d'un cycle payé : modifier ou supprimer → 409, rien ne change",
   assert.deepEqual(await (await send("GET", "/lessons")).json(), before);
 });
 
-test("ajout rétroactif : premier cycle non payé non plein, jamais un cycle payé", async () => {
+test("ajout rétroactif : premier cycle non plein ; jamais un cycle payé déjà plein", async () => {
   const e = await enrollment();
   for (let i = 0; i < 4; i++) await lesson(e);
   await markPaid((await cyclesOf(e))[0].id);
@@ -142,6 +142,34 @@ test("ajout rétroactif : premier cycle non payé non plein, jamais un cycle pay
   const [paid, second] = await cyclesOf(e);
   assert.ok(!paid.lessonIds.includes(oldId));
   assert.ok(second.lessonIds.includes(oldId));
+});
+
+test("payé au premier cours : les séances suivantes complètent ce cycle payé, puis la suivante ouvre le cycle 2", async () => {
+  const e = await enrollment();
+  await lesson(e);
+  await markPaid((await cyclesOf(e))[0].id);
+  for (let i = 0; i < 3; i++) await lesson(e);
+  let [c1, c2] = await cyclesOf(e);
+  assert.equal(c1.lessonIds.length, 4);
+  assert.equal(c1.status, "paid");
+  assert.equal(c2, undefined);
+  await lesson(e);
+  [c1, c2] = await cyclesOf(e);
+  assert.equal(c2.number, 2);
+  assert.equal(c2.lessonIds.length, 1);
+});
+
+test("un ancien cycle payé ne reçoit plus de séances, même si le nombre de cours augmente", async () => {
+  const e = await enrollment();
+  for (let i = 0; i < 4; i++) await lesson(e);
+  await markPaid((await cyclesOf(e))[0].id);
+  await lesson(e); // cycle 2
+  await markPaid((await cyclesOf(e))[1].id);
+  await t.db.query("update enrollments set cycle_size = 8 where id = $1", [e]);
+  const next = await lesson(e);
+  const [c1, c2] = await cyclesOf(e);
+  assert.equal(c1.lessonIds.length, 4); // le cycle 1, payé et plus le dernier, ne bouge pas
+  assert.ok(c2.lessonIds.includes(next)); // la séance va dans le dernier cycle (payé, pas plein)
 });
 
 test("deux inscriptions du même élève : chacune ses cycles", async () => {

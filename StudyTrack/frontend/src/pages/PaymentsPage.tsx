@@ -5,7 +5,7 @@ import Icon from "../components/Icon";
 import { Confirm } from "../components/Modal";
 import PaymentItem from "../components/PaymentItem";
 import { Avatar, Badge, Empty, Notice, PageHeader, PageMessages, Stat } from "../components/ui";
-import { isOverdue, paymentsOverview, studentColor } from "../lib/cycles";
+import { isOverdue, ongoingText, paymentsOverview, studentColor } from "../lib/cycles";
 import { monthKey, timeOf } from "../lib/lessons";
 import { cap, fmt, money, useAppData } from "../lib/useAppData";
 import { markPaid, markUnpaid } from "../services/api";
@@ -25,7 +25,7 @@ export default function PaymentsPage() {
   const who = students.includes(student) ? student : "";
   const history = (o?.paid ?? []).filter((x) => !who || x.enrollment.studentName === who);
   const months = [...new Set(history.map((x) => monthKey(x.cycle.paidAt ?? "")))];
-  const late = (o?.due ?? []).filter((x) => isOverdue(x.doneAt));
+  const late = (o?.due ?? []).filter((x) => isOverdue(x.dueAt));
   const fixingInfo = fixing && o?.paid.find((x) => x.cycle.id === fixing.id);
 
   return (
@@ -45,41 +45,41 @@ export default function PaymentsPage() {
 
             <div className="grid-2">
               <section className="card" aria-labelledby="h-due">
-                <div className="card-head"><h2 id="h-due">À payer</h2>{o.due.length > 0 && <span className="amount">{money(o.totalDue)}</span>}<p className="card-sub">Le nombre de cours prévu est atteint : il faut payer l'enseignant.</p></div>
-                {o.due.length === 0 ? <Empty icon="check" title="Rien à payer pour le moment">Les paiements apparaîtront ici quand le nombre de cours sera atteint.</Empty> : (
+                <div className="card-head"><h2 id="h-due">À payer</h2>{o.due.length > 0 && <span className="amount">{money(o.totalDue)}</span>}<p className="card-sub">Un nouveau cycle a commencé : on paie l'enseignant au premier cours.</p></div>
+                {o.due.length === 0 ? <Empty icon="check" title="Rien à payer pour le moment">Un paiement apparaît ici dès le premier cours d'un nouveau cycle.</Empty> : (
                   <ul className="rows">
                     {o.due.map((x) => (
-                      <PaymentItem key={x.cycle.id} cycle={x.cycle} enrollment={x.enrollment} amount={x.amount} doneAt={x.doneAt} color={color(x.enrollment.studentName)} busy={busy}
-                        detail={`Paiement n° ${x.cycle.number}, ${x.enrollment.cycleSize} cours${x.doneAt ? `. Dernier cours : ${fmt(x.doneAt, { weekday: "long", day: "numeric", month: "long" })}` : ""}`}
+                      <PaymentItem key={x.cycle.id} cycle={x.cycle} enrollment={x.enrollment} amount={x.amount} dueAt={x.dueAt} color={color(x.enrollment.studentName)} busy={busy}
+                        detail={`Paiement n° ${x.cycle.number}, pour ${x.enrollment.cycleSize} cours${x.dueAt ? `. Premier cours : ${fmt(x.dueAt, { weekday: "long", day: "numeric", month: "long" })}` : ""}`}
                         onPay={(id) => run(() => markPaid(id), "Le paiement est enregistré. Il apparaît dans l'historique, plus bas.")} />
                     ))}
                   </ul>
                 )}
                 <div className="card-foot legend">
-                  <span><Badge tone="warning">À payer</Badge> le nombre de cours est atteint cette semaine</span>
-                  <span><Badge tone="danger">En retard</Badge> atteint depuis plus d'une semaine</span>
+                  <span><Badge tone="warning">À payer</Badge> le cycle a commencé cette semaine</span>
+                  <span><Badge tone="danger">En retard</Badge> le cycle a commencé avant cette semaine</span>
                 </div>
               </section>
 
               <section className="card" aria-labelledby="h-going">
-                <div className="card-head"><h2 id="h-going">Bientôt à payer</h2><p className="card-sub">Combien de cours avant le prochain paiement.</p></div>
+                <div className="card-head"><h2 id="h-going">Où en est chaque cours</h2><p className="card-sub">Combien de cours déjà payés restent avant le prochain paiement.</p></div>
                 {o.ongoing.length === 0 ? <Empty small>Aucun cours pour le moment. Ajoute-en un dans la page Cours.</Empty> : (
                   <ul className="rows">
-                    {o.ongoing.map(({ enrollment: e, done, remaining }) => (
+                    {o.ongoing.map((x) => { const { enrollment: e, done, state } = x; return (
                       <li key={e.id} className="row">
                         <div className="row-main">
                           <Avatar name={e.studentName} color={color(e.studentName)} />
                           <div className="row-text">
                             <p className="row-title">{e.studentName} · {e.subjectName}</p>
-                            <p className="row-sub">{remaining > 0 ? `Encore ${remaining} cours avant de payer ${e.teacherName}` : `Nombre de cours atteint`}{e.price ? ` (${money(e.price)})` : ""}</p>
+                            <p className="row-sub">{ongoingText(x)}</p>
                           </div>
                         </div>
                         <div className="going-progress">
-                          <div className={`progress${remaining === 0 ? " is-full" : ""}`} aria-hidden="true"><span style={{ width: `${(done / e.cycleSize) * 100}%` }} /></div>
-                          <span className="muted">{done} cours sur {e.cycleSize}</span>
+                          <div className={`progress${state === "paid" ? " is-full" : ""}`} aria-hidden="true"><span style={{ width: `${(done / e.cycleSize) * 100}%` }} /></div>
+                          <span className="muted">{state === "paid" ? `${done} sur ${e.cycleSize} payés` : `${done} cours sur ${e.cycleSize}`}</span>
                         </div>
                       </li>
-                    ))}
+                    ); })}
                   </ul>
                 )}
               </section>

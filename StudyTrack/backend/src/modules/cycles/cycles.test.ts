@@ -53,13 +53,35 @@ const markPaid = (id: string, body: unknown = {}) => send("PATCH", `/payment-cyc
 const markUnpaid = (id: string) => send("PATCH", `/payment-cycles/${id}/mark-unpaid`);
 const message = async (res: Response) => (await res.json()).message;
 
-test("mark-paid sur un cycle pas encore plein : 409, rien ne change", async () => {
+test("paiement au premier cours : mark-paid dès la 1re séance ; les suivantes entrent dans ce cycle payé", async () => {
   const e = await enrollment();
-  await completed(e);
+  const first = await completed(e);
   const [c] = await cyclesOf(e);
   const res = await markPaid(c.id);
+  assert.equal(res.status, 200);
+  assert.equal((await res.json()).status, "paid");
+  const others = [await completed(e), await completed(e), await completed(e)];
+  const [paid, ...rest] = await cyclesOf(e);
+  assert.deepEqual(paid.lessonIds, [first, ...others]);
+  assert.equal(paid.status, "paid");
+  assert.equal(rest.length, 0);
+  // le cycle payé est plein : la 5e séance ouvre le cycle 2 (le paiement suivant)
+  const fifth = await completed(e);
+  const [, second] = await cyclesOf(e);
+  assert.equal(second.number, 2);
+  assert.equal(second.status, "unpaid");
+  assert.deepEqual(second.lessonIds, [fifth]);
+});
+
+test("mark-paid sur un cycle sans aucune séance : 409, rien ne change", async () => {
+  const e = await enrollment();
+  const id = await completed(e);
+  await send("PATCH", `/lessons/${id}`, { status: "cancelled" }); // le cycle reste, vide
+  const [c] = await cyclesOf(e);
+  assert.deepEqual(c.lessonIds, []);
+  const res = await markPaid(c.id);
   assert.equal(res.status, 409);
-  assert.equal(await message(res), "Ce cycle n'est pas encore complet.");
+  assert.equal(await message(res), "Ce cycle n'a encore aucun cours.");
   assert.equal((await cyclesOf(e))[0].status, "unpaid");
 });
 

@@ -8,11 +8,20 @@ export function weekRange(now = new Date()) { const start = addDays(startOfDay(n
 const within = (iso: string | undefined, a: Date, b: Date) => !!iso && new Date(iso) >= a && new Date(iso) < b;
 
 /* Affichage seulement : le serveur reste la source de vérité des cycles.
-   Seules les séances « effectuées » comptent (prévues et annulées jamais). */
+   Seules les séances « effectuées » comptent (prévues et annulées jamais).
+   Paiement au premier cours : un cycle non payé est « à payer » dès sa 1re séance effectuée (date = `dueAt`). */
 export function cycleProgress(c: PaymentCycle, e: Enrollment, lessons: Lesson[]) {
   const done = c.lessonIds.map((id) => lessons.find((l) => l.id === id)).filter((l): l is Lesson => l?.status === "completed");
-  const doneAt = done.map((l) => l.date).sort().at(-1); // date de la dernière séance : le cycle devient « à payer » ce jour-là
-  return { done: Math.min(done.length, e.cycleSize), due: c.status === "unpaid" && done.length >= e.cycleSize, doneAt };
+  const dueAt = done.map((l) => l.date).sort()[0]; // date de la 1re séance du cycle : le paiement est dû ce jour-là
+  return { done: Math.min(done.length, e.cycleSize), due: c.status === "unpaid" && done.length >= 1, dueAt };
+}
+
+/** Le cycle où ira la prochaine séance effectuée (même règle que le serveur, cycles/service.ts `cycleFor`) :
+    le premier cycle pas plein parmi les non payés et le dernier cycle (même payé). `undefined` = un nouveau cycle. */
+export function currentCycle(cycles: PaymentCycle[], e: Enrollment) {
+  const mine = cycles.filter((c) => c.enrollmentId === e.id).sort((a, b) => a.number - b.number);
+  const last = mine.at(-1)?.number;
+  return mine.find((c) => c.lessonIds.length < e.cycleSize && (c.status === "unpaid" || c.number === last));
 }
 
 export function summarize(data: DashboardData, now = new Date()) {
@@ -25,8 +34,8 @@ export function summarize(data: DashboardData, now = new Date()) {
     .filter((c) => c.status === "unpaid" && byId.has(c.enrollmentId))
     .map((cycle) => { const enrollment = byId.get(cycle.enrollmentId)!; return { cycle, enrollment, amount: amountOf(cycle, enrollment), ...cycleProgress(cycle, enrollment, data.lessons) }; })
     .filter((o) => o.due);
-  const dueThisWeek = due.filter((o) => within(o.doneAt, week.start, week.end));
-  const overdue = due.filter((o) => o.doneAt && new Date(o.doneAt) < week.start);
+  const dueThisWeek = due.filter((o) => within(o.dueAt, week.start, week.end));
+  const overdue = due.filter((o) => o.dueAt && new Date(o.dueAt) < week.start);
 
   /* Cours d'un jour (enregistrés + cours qui se répètent), dans l'ordre de l'heure */
   const lessonsOn = (day: Date, keep: (l: Lesson) => boolean) => [...data.lessons, ...occurrences(data.slots, data.lessons, day, addDays(day, 1))]
@@ -52,6 +61,8 @@ export function studentColor(enrollments: Enrollment[]) {
   return (name: string) => PALETTE[Math.max(names.indexOf(name), 0) % PALETTE.length];
 }
 
+const ORDER = { due: 0, paid: 1, next: 2 } as const;
+
 /** Tout ce qu'il faut pour la page Paiements (tous les cycles, sans limite de semaine). */
 export function paymentsOverview(data: DashboardData) {
   const byId = new Map(data.enrollments.map((e) => [e.id, e]));
@@ -62,16 +73,20 @@ export function paymentsOverview(data: DashboardData) {
     .filter((c) => c.status === "unpaid" && byId.has(c.enrollmentId))
     .map((cycle) => { const enrollment = byId.get(cycle.enrollmentId)!; return { cycle, enrollment, amount: amountOf(cycle, enrollment), ...cycleProgress(cycle, enrollment, data.lessons) }; })
     .filter((o) => o.due)
-    .sort((a, b) => (a.doneAt ?? "").localeCompare(b.doneAt ?? ""));
+    .sort((a, b) => (a.dueAt ?? "").localeCompare(b.dueAt ?? ""));
 
-  /* En cours : pour chaque inscription, le cycle où ira la prochaine séance (premier cycle non payé non plein), ou 0 séance */
+  /* Pour chaque inscription, où en est le cycle en cours :
+     - "paid" : déjà payé ; `remaining` cours restent avant le prochain paiement (qui se fera au cours suivant) ;
+     - "due"  : commencé et pas encore payé (il est aussi dans `due`) ;
+     - "next" : pas de cycle commencé ; le prochain cours effectué ouvre un cycle, à payer ce jour-là. */
   const ongoing = data.enrollments
     .map((enrollment) => {
-      const cycle = data.cycles.filter((c) => c.enrollmentId === enrollment.id && c.status === "unpaid" && c.lessonIds.length < enrollment.cycleSize).sort((a, b) => a.number - b.number)[0];
+      const cycle = currentCycle(data.cycles, enrollment);
       const done = cycle ? cycleProgress(cycle, enrollment, data.lessons).done : 0;
-      return { enrollment, done, remaining: enrollment.cycleSize - done };
+      const state: "paid" | "due" | "next" = !cycle || done === 0 ? "next" : cycle.status === "paid" ? "paid" : "due";
+      return { enrollment, done, remaining: enrollment.cycleSize - done, state };
     })
-    .sort((a, b) => a.remaining - b.remaining || a.enrollment.studentName.localeCompare(b.enrollment.studentName));
+    .sort((a, b) => ORDER[a.state] - ORDER[b.state] || a.remaining - b.remaining || a.enrollment.studentName.localeCompare(b.enrollment.studentName));
 
   const paid = data.cycles
     .filter((c) => c.status === "paid" && byId.has(c.enrollmentId))
@@ -85,5 +100,12 @@ export function paymentsOverview(data: DashboardData) {
   return { due, ongoing, paid, totalDue: due.reduce((t, o) => t + o.amount, 0), totalPaid: paid.reduce((t, o) => t + o.amount, 0) };
 }
 
-/** « En retard » : le cycle est complet depuis une semaine passée (même règle que l'accueil). */
-export const isOverdue = (doneAt: string | undefined, now = new Date()) => !!doneAt && new Date(doneAt) < weekRange(now).start;
+/** « En retard » : le paiement était dû (1re séance du cycle) avant le début de la semaine en cours. */
+export const isOverdue = (dueAt: string | undefined, now = new Date()) => !!dueAt && new Date(dueAt) < weekRange(now).start;
+
+/** La même phrase partout pour dire où en est un cours : « 2 cours sur 4 déjà payés… », « à payer maintenant », etc. */
+export function ongoingText({ state, done, remaining, enrollment: e }: { state: "paid" | "due" | "next"; done: number; remaining: number; enrollment: Enrollment }) {
+  if (state === "paid") return `${done} cours sur ${e.cycleSize} déjà payés. Encore ${remaining} cours, puis le prochain paiement (au cours suivant).`;
+  if (state === "due") return `Nouveau cycle commencé (${done} cours sur ${e.cycleSize}) : à payer maintenant.`;
+  return "Le prochain paiement se fera au prochain cours.";
+}

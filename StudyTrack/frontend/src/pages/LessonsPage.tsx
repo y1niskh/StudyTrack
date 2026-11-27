@@ -8,9 +8,9 @@ import SlotForm from "../components/SlotForm";
 import { Avatar, Badge, Empty, LessonBadge, Notice, PageHeader, PageMessages } from "../components/ui";
 import { addDays, studentColor, weekRange } from "../lib/cycles";
 import { dayKey, timeOf, toISO } from "../lib/lessons";
-import { isVirtual, lessonsToConfirm, occurrences, WEEKDAYS } from "../lib/slots";
+import { isVirtual, lessonsToConfirm, occurrences, slotsSentence, WEEKDAYS } from "../lib/slots";
 import { cap, fmt, useAppData } from "../lib/useAppData";
-import { createLesson, createSlot, deleteLesson, deleteSlot, updateLesson } from "../services/api";
+import { createLesson, createSlots, deleteLesson, deleteSlot, updateLesson } from "../services/api";
 import type { Lesson, LessonStatus, Slot } from "../types";
 import "./LessonsPage.css";
 
@@ -150,7 +150,7 @@ export default function LessonsPage() {
                                 <LessonBadge status={l.status} />
                                 {l.notes && <p className="row-note">Remarque : {l.notes}</p>}
                                 {locked.has(l.id)
-                                  ? <p className="row-note lock"><Icon n="lock" /> Ce cours fait partie d'un paiement déjà réglé : il ne peut plus être modifié.</p>
+                                  ? <p className="row-note lock"><Icon n="lock" /> Ce cours fait partie d'un paiement déjà réglé, il ne peut plus être modifié. En cas d'erreur : page Paiements, « Corriger ce paiement », puis modifie le cours et paie de nouveau.</p>
                                   : <div className="row-actions"><button type="button" className="btn btn-secondary btn-sm" onClick={() => { clearNotice(); setDialog({ kind: "edit", lesson: l, confirmDelete: false }); }}><Icon n="edit" /> Modifier</button></div>}
                               </li>
                             ))}
@@ -188,10 +188,10 @@ export default function LessonsPage() {
       </div>
 
       <Modal open={dialog?.kind === "slot"} title="Ajouter un cours chaque semaine" onClose={close}>
-        <p className="modal-intro">Écris le cours une seule fois : il s'affichera tout seul chaque semaine. Un nouvel élève est ajouté automatiquement.</p>
+        <p className="modal-intro">Écris le cours une seule fois : il s'affichera tout seul chaque semaine. Coche plusieurs jours s'il a lieu plusieurs fois par semaine. Un nouvel élève est ajouté automatiquement.</p>
         {modalError}
         <SlotForm students={students} subjects={uniq((e) => e.subjectName)} teachers={uniq((e) => e.teacherName)} busy={busy} onCancel={close}
-          submitLabel="Ajouter ce cours" onSubmit={(v) => void act(() => createSlot(v), `Cours ajouté : ${v.studentName}, chaque ${WEEKDAYS[v.weekday]} à ${v.time}.`)} />
+          submitLabel="Ajouter ce cours" onSubmit={(list) => void act(() => createSlots(list), `Cours ajouté : ${list[0].studentName}, ${slotsSentence(list)}.`)} />
       </Modal>
 
       <Modal open={dialog?.kind === "one"} title="Ajouter un cours ponctuel" onClose={close}>

@@ -29,3 +29,9 @@ export function lessonsToConfirm(data: DashboardData, now: Date): Lesson[] {
     .sort((a, b) => a.date.localeCompare(b.date));
 }
 
+
+/** « chaque lundi à 16:00 et jeudi à 17:30 » */
+export function slotsSentence(list: { weekday: number; time: string }[]) {
+  const parts = list.map((s) => `${WEEKDAYS[s.weekday]} à ${s.time}`);
+  return `chaque ${parts.length > 1 ? `${parts.slice(0, -1).join(", ")} et ${parts.at(-1)}` : parts[0]}`;
+}

@@ -4,7 +4,7 @@ import AppLayout from "../components/AppLayout";
 import Icon from "../components/Icon";
 import PaymentItem from "../components/PaymentItem";
 import { Avatar, Badge, Empty, LessonBadge, Notice, PageHeader, PageMessages, Stat } from "../components/ui";
-import { isOverdue, paymentsOverview, studentColor, summarize } from "../lib/cycles";
+import { isOverdue, ongoingText, paymentsOverview, studentColor, summarize } from "../lib/cycles";
 import { timeOf } from "../lib/lessons";
 import { lessonsToConfirm } from "../lib/slots";
 import { cap, fmt, money, useAppData } from "../lib/useAppData";
@@ -22,10 +22,10 @@ export default function DashboardPage() {
   const s = data ? summarize(data, now) : null;
   const o = data ? paymentsOverview(data) : null;
   const toConfirm = data ? lessonsToConfirm(data, now) : [];
-  const overdue = o ? o.due.filter((x) => isOverdue(x.doneAt, now)) : [];
+  const overdue = o ? o.due.filter((x) => isOverdue(x.dueAt, now)) : [];
   const color = studentColor(data?.enrollments ?? []);
   const studentCount = new Set((data?.enrollments ?? []).map((e) => e.studentName)).size;
-  const upcoming = o ? o.ongoing.filter((x) => x.done > 0 && x.remaining > 0).slice(0, 4) : [];
+  const upcoming = o ? o.ongoing.filter((x) => x.state !== "due").slice(0, 5) : [];
   const pay = (id: string) => run(() => markPaid(id), "Le paiement est enregistré. Il apparaît maintenant dans l'historique.", "Le paiement n'a pas pu être enregistré. Vérifie la connexion Internet et réessaie.");
 
   const lessonList = (list: { lesson: Lesson; enrollment: Enrollment }[], empty: string) =>
@@ -65,7 +65,7 @@ export default function DashboardPage() {
                 {overdue.length > 0 && (
                   <Notice kind="error" action={<Link className="btn btn-secondary btn-sm" to="/paiements">Voir les paiements <Icon n="arrow" /></Link>}>
                     <strong>{overdue.length} paiement{overdue.length > 1 ? "s" : ""} en retard</strong>
-                    Le nombre de cours prévu est atteint depuis plus d'une semaine.
+                    Le premier cours de ce cycle date d'avant cette semaine, et le paiement n'est pas encore fait.
                   </Notice>
                 )}
               </section>
@@ -97,8 +97,8 @@ export default function DashboardPage() {
                   {o.due.length === 0 ? <Empty small>Rien à payer pour le moment.</Empty> : (
                     <ul className="rows">
                       {o.due.map((x) => (
-                        <PaymentItem key={x.cycle.id} cycle={x.cycle} enrollment={x.enrollment} amount={x.amount} doneAt={x.doneAt} color={color(x.enrollment.studentName)} busy={busy}
-                          detail={x.doneAt ? `Dernier cours : ${fmt(x.doneAt, { weekday: "long", day: "numeric", month: "long" })}` : undefined} onPay={pay} />
+                        <PaymentItem key={x.cycle.id} cycle={x.cycle} enrollment={x.enrollment} amount={x.amount} dueAt={x.dueAt} color={color(x.enrollment.studentName)} busy={busy}
+                          detail={x.dueAt ? `Premier cours du cycle : ${fmt(x.dueAt, { weekday: "long", day: "numeric", month: "long" })}` : undefined} onPay={pay} />
                       ))}
                     </ul>
                   )}
@@ -106,16 +106,16 @@ export default function DashboardPage() {
                 </section>
 
                 <section className="card" aria-labelledby="h-next">
-                  <div className="card-head"><h2 id="h-next">Prochaines échéances</h2><p className="card-sub">Les paiements qui arrivent bientôt.</p></div>
+                  <div className="card-head"><h2 id="h-next">Prochaines échéances</h2><p className="card-sub">On paie l'enseignant au premier cours de chaque cycle.</p></div>
                   {upcoming.length === 0 ? <Empty small>Aucun paiement ne s'approche pour le moment.</Empty> : (
                     <ul className="rows">
-                      {upcoming.map(({ enrollment: e, done, remaining }) => (
+                      {upcoming.map((x) => { const { enrollment: e, done } = x; return (
                         <li key={e.id} className="row">
                           <div className="row-main">
                             <Avatar name={e.studentName} color={color(e.studentName)} />
                             <div className="row-text">
                               <p className="row-title">{e.studentName} · {e.subjectName}</p>
-                              <p className="row-sub">Encore {remaining} cours avant de payer {e.teacherName}{e.price ? ` (${money(e.price)})` : ""}</p>
+                              <p className="row-sub">{ongoingText(x)}{e.price ? ` Prix : ${money(e.price)}.` : ""}</p>
                             </div>
                           </div>
                           <div className="next-progress" aria-label={`${done} cours faits sur ${e.cycleSize}`}>
@@ -123,7 +123,7 @@ export default function DashboardPage() {
                             <span className="muted">{done} sur {e.cycleSize}</span>
                           </div>
                         </li>
-                      ))}
+                      ); })}
                     </ul>
                   )}
                 </section>

@@ -45,6 +45,12 @@ export async function createSlot(input: SlotInput): Promise<void> {
   await req("/slots", { method: "POST", body: json(input) });
 }
 
+/** Plusieurs jours pour le même cours (ex. lundi et jeudi) : un appel par jour, l'un après l'autre
+    (le premier crée l'élève et l'inscription si besoin, les suivants les retrouvent). */
+export async function createSlots(inputs: SlotInput[]): Promise<void> {
+  for (const input of inputs) await createSlot(input);
+}
+
 /** Arrête un cours qui se répète : supprime ses cours prévus à venir, garde tout le passé. */
 export async function deleteSlot(id: string): Promise<void> {
   await req(`/slots/${id}`, { method: "DELETE" });

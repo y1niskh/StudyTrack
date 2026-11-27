@@ -7,10 +7,10 @@ import { Modal } from "../components/Modal";
 import PaymentItem from "../components/PaymentItem";
 import SlotForm from "../components/SlotForm";
 import { Avatar, Badge, Empty, Notice, PageHeader, PageMessages } from "../components/ui";
-import { isOverdue, paymentsOverview, studentColor } from "../lib/cycles";
-import { WEEKDAYS } from "../lib/slots";
+import { isOverdue, ongoingText, paymentsOverview, studentColor } from "../lib/cycles";
+import { slotsSentence } from "../lib/slots";
 import { fmt, money, useAppData } from "../lib/useAppData";
-import { createSlot, markPaid, updateEnrollment } from "../services/api";
+import { createSlots, markPaid, updateEnrollment } from "../services/api";
 import type { Enrollment } from "../types";
 import "./StudentsPage.css";
 
@@ -23,7 +23,7 @@ export default function StudentsPage() {
   const [q, setQ] = useState("");
   const [subject, setSubject] = useState("");
   const [teacher, setTeacher] = useState("");
-  const [dialog, setDialog] = useState<{ kind: "add"; student: string } | { kind: "edit"; e: Enrollment } | null>(null);
+  const [dialog, setDialog] = useState<{ kind: "add"; student: string; subject?: string; teacher?: string } | { kind: "edit"; e: Enrollment } | null>(null);
   const uid = useId();
 
   const enrollments = data?.enrollments ?? [];
@@ -36,7 +36,7 @@ export default function StudentsPage() {
     const list = enrollments.filter((e) => e.studentName === name).sort((a, b) => a.subjectName.localeCompare(b.subjectName));
     const due = (o?.due ?? []).filter((x) => x.enrollment.studentName === name);
     const weekly = (data?.slots ?? []).filter((s) => list.some((e) => e.id === s.enrollmentId)).length;
-    return { name, list, due, weekly, late: due.some((x) => isOverdue(x.doneAt)) };
+    return { name, list, due, weekly, late: due.some((x) => isOverdue(x.dueAt)) };
   });
   const shown = students.filter((s) =>
     (!q || norm(s.name).includes(norm(q))) && (!subject || s.list.some((e) => e.subjectName === subject)) && (!teacher || s.list.some((e) => e.teacherName === teacher)));
@@ -138,15 +138,18 @@ export default function StudentsPage() {
                     <li key={e.id} className="subject">
                       <div className="subject-head">
                         <div><p className="row-title">{e.subjectName}</p><p className="row-sub">avec {e.teacherName}</p></div>
-                        <button type="button" className="btn btn-secondary btn-sm" onClick={() => { clearNotice(); setDialog({ kind: "edit", e }); }}><Icon n="edit" /> Modifier le prix et le nombre de cours</button>
+                        <div className="row-actions">
+                          <button type="button" className="btn btn-secondary btn-sm" onClick={() => { clearNotice(); setDialog({ kind: "add", student: e.studentName, subject: e.subjectName, teacher: e.teacherName }); }}><Icon n="plus" /> Ajouter un jour de cours</button>
+                          <button type="button" className="btn btn-secondary btn-sm" onClick={() => { clearNotice(); setDialog({ kind: "edit", e }); }}><Icon n="edit" /> Modifier le prix et le nombre de cours</button>
+                        </div>
                       </div>
                       <dl className="facts">
-                        <div><dt>Jours de cours</dt><dd>{weekly.length === 0 ? "Aucun cours chaque semaine" : weekly.map((s) => `Chaque ${WEEKDAYS[s.weekday]} à ${s.time}`).join(" · ")}</dd></div>
-                        <div><dt>Paiement</dt><dd>Tous les {e.cycleSize} cours{e.price ? `, ${money(e.price)}` : " (prix non indiqué)"}</dd></div>
+                        <div><dt>Jours de cours</dt><dd>{weekly.length === 0 ? "Aucun cours chaque semaine" : `${weekly.length > 1 ? `${weekly.length} fois par semaine : ` : ""}${slotsSentence([...weekly].sort((a, b) => ((a.weekday + 6) % 7) - ((b.weekday + 6) % 7) || a.time.localeCompare(b.time)))}`}</dd></div>
+                        <div><dt>Paiement</dt><dd>Au premier cours, pour {e.cycleSize} cours{e.price ? ` : ${money(e.price)}` : " (prix non indiqué)"}</dd></div>
                         {ongoing && (
-                          <div><dt>Prochain paiement</dt><dd>
+                          <div><dt>Cycle en cours</dt><dd>
                             <div className="progress" aria-hidden="true"><span style={{ width: `${(ongoing.done / e.cycleSize) * 100}%` }} /></div>
-                            {ongoing.done} cours faits sur {e.cycleSize}. {ongoing.remaining > 0 ? `Encore ${ongoing.remaining} avant le paiement.` : "Le nombre de cours est atteint."}
+                            {ongoingText(ongoing)}
                           </dd></div>
                         )}
                       </dl>
@@ -161,8 +164,8 @@ export default function StudentsPage() {
               {current.due.length === 0 ? <Empty small>Aucun paiement à faire pour {current.name}.</Empty> : (
                 <ul className="rows">
                   {current.due.map((x) => (
-                    <PaymentItem key={x.cycle.id} cycle={x.cycle} enrollment={x.enrollment} amount={x.amount} doneAt={x.doneAt} color={color(current.name)} busy={busy}
-                      detail={`Paiement n° ${x.cycle.number}, ${x.enrollment.cycleSize} cours`} onPay={(id) => run(() => markPaid(id), "Le paiement est enregistré.")} />
+                    <PaymentItem key={x.cycle.id} cycle={x.cycle} enrollment={x.enrollment} amount={x.amount} dueAt={x.dueAt} color={color(current.name)} busy={busy}
+                      detail={`Paiement n° ${x.cycle.number}, pour ${x.enrollment.cycleSize} cours`} onPay={(id) => run(() => markPaid(id), "Le paiement est enregistré.")} />
                   ))}
                 </ul>
               )}
@@ -194,13 +197,13 @@ export default function StudentsPage() {
         )}
       </div>
 
-      <Modal open={dialog?.kind === "add"} title={dialog?.kind === "add" && dialog.student ? `Ajouter un cours pour ${dialog.student}` : "Ajouter un élève"} onClose={close}>
+      <Modal open={dialog?.kind === "add"} title={dialog?.kind === "add" && dialog.subject ? `Ajouter un jour de cours : ${dialog.student}, ${dialog.subject}` : dialog?.kind === "add" && dialog.student ? `Ajouter un cours pour ${dialog.student}` : "Ajouter un élève"} onClose={close}>
         <p className="modal-intro">{dialog?.kind === "add" && dialog.student ? "Le cours s'affichera tout seul chaque semaine." : "Écris le nom de l'élève et son premier cours de la semaine. L'élève est créé en même temps."}</p>
         {modalError}
         {dialog?.kind === "add" && (
-          <SlotForm initialStudent={dialog.student} students={uniq((e) => e.studentName)} subjects={uniq((e) => e.subjectName)} teachers={uniq((e) => e.teacherName)} busy={busy} onCancel={close}
+          <SlotForm initial={{ studentName: dialog.student, subjectName: dialog.subject, teacherName: dialog.teacher }} students={uniq((e) => e.studentName)} subjects={uniq((e) => e.subjectName)} teachers={uniq((e) => e.teacherName)} busy={busy} onCancel={close}
             submitLabel={dialog.student ? "Ajouter ce cours" : "Ajouter cet élève"}
-            onSubmit={async (v) => { if (await run(() => createSlot(v), dialog.student ? "Cours ajouté." : `${v.studentName} est ajouté(e), avec son cours chaque ${WEEKDAYS[v.weekday]} à ${v.time}.`)) setDialog(null); }} />
+            onSubmit={async (list) => { if (await run(() => createSlots(list), dialog.student ? `Cours ajouté : ${slotsSentence(list)}.` : `${list[0].studentName} est ajouté(e), avec son cours ${slotsSentence(list)}.`)) setDialog(null); }} />
         )}
       </Modal>
 
